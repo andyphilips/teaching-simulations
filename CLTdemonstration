@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interactive Central Limit Theorem Demonstration</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .chart-container {
+            background-color: white;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        select, input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Interactive Central Limit Theorem Demonstration</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="distribution">Distribution Type:</label>
+                <select id="distribution">
+                    <option value="normal">Normal</option>
+                    <option value="uniform">Uniform</option>
+                    <option value="exponential">Exponential</option>
+                    <option value="poisson">Poisson</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="sampleSize">Sample Size:</label>
+                <input type="number" id="sampleSize" value="30" min="1" max="1000">
+                
+                <label for="numSamples">Number of Samples:</label>
+                <input type="number" id="numSamples" value="1000" min="1" max="10000">
+            </div>
+            
+            <div class="control-group">
+                <label for="param1">Distribution Parameter 1:</label>
+                <input type="number" id="param1" value="0" step="0.1">
+                
+                <label for="param2">Distribution Parameter 2:</label>
+                <input type="number" id="param2" value="1" step="0.1" min="0.1">
+            </div>
+        </div>
+        
+        <button onclick="updateVisualization()">Generate Visualization</button>
+        
+        <div class="charts">
+            <div class="chart-container">
+                <canvas id="originalDist"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="sampleMeans"></canvas>
+            </div>
+        </div>
+        
+        <div class="stats" id="statistics"></div>
+    </div>
+
+    <script>
+        let originalDistChart = null;
+        let sampleMeansChart = null;
+
+        function generateData(distribution, sampleSize, numSamples, param1, param2) {
+            let data = [];
+            let sampleMeans = [];
+            
+            // Generate samples
+            for (let i = 0; i < numSamples; i++) {
+                let sample = [];
+                for (let j = 0; j < sampleSize; j++) {
+                    let value;
+                    switch(distribution) {
+                        case 'normal':
+                            value = math.random(param1, param2);
+                            break;
+                        case 'uniform':
+                            value = math.random(param1, param1 + param2);
+                            break;
+                        case 'exponential':
+                            value = -Math.log(1 - Math.random()) / param2;
+                            break;
+                        case 'poisson':
+                            let L = Math.exp(-param1);
+                            let k = 0;
+                            let p = 1;
+                            do {
+                                k++;
+                                p *= Math.random();
+                            } while (p > L);
+                            value = k - 1;
+                            break;
+                    }
+                    sample.push(value);
+                    data.push(value);
+                }
+                sampleMeans.push(math.mean(sample));
+            }
+            
+            return { data, sampleMeans };
+        }
+
+        function createHistogram(data, bins = 30) {
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            const binWidth = (max - min) / bins;
+            const histogram = Array(bins).fill(0);
+            
+            data.forEach(value => {
+                const binIndex = Math.min(Math.floor((value - min) / binWidth), bins - 1);
+                histogram[binIndex]++;
+            });
+            
+            const labels = Array(bins).fill(0).map((_, i) => 
+                (min + (i + 0.5) * binWidth).toFixed(2));
+            
+            return { labels, data: histogram };
+        }
+
+        function updateVisualization() {
+            const distribution = document.getElementById('distribution').value;
+            const sampleSize = parseInt(document.getElementById('sampleSize').value);
+            const numSamples = parseInt(document.getElementById('numSamples').value);
+            const param1 = parseFloat(document.getElementById('param1').value);
+            const param2 = parseFloat(document.getElementById('param2').value);
+            
+            const { data, sampleMeans } = generateData(distribution, sampleSize, numSamples, param1, param2);
+            
+            const originalHist = createHistogram(data);
+            const meansHist = createHistogram(sampleMeans);
+            
+            // Update statistics
+            const originalMean = math.mean(data).toFixed(4);
+            const originalStd = math.std(data).toFixed(4);
+            const meansMean = math.mean(sampleMeans).toFixed(4);
+            const meansStd = math.std(sampleMeans).toFixed(4);
+            const theoreticalStd = (originalStd / Math.sqrt(sampleSize)).toFixed(4);
+            
+            document.getElementById('statistics').innerHTML = `
+                <h3>Statistics:</h3>
+                <p>Original Distribution: Mean = ${originalMean}, Std Dev = ${originalStd}</p>
+                <p>Sample Means Distribution: Mean = ${meansMean}, Std Dev = ${meansStd}</p>
+                <p>Theoretical Standard Error = ${theoreticalStd}</p>
+            `;
+            
+            // Update charts
+            if (originalDistChart) originalDistChart.destroy();
+            if (sampleMeansChart) sampleMeansChart.destroy();
+            
+            originalDistChart = new Chart(document.getElementById('originalDist'), {
+                type: 'bar',
+                data: {
+                    labels: originalHist.labels,
+                    datasets: [{
+                        label: 'Original Distribution',
+                        data: originalHist.data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Original Distribution'
+                        }
+                    }
+                }
+            });
+            
+            sampleMeansChart = new Chart(document.getElementById('sampleMeans'), {
+                type: 'bar',
+                data: {
+                    labels: meansHist.labels,
+                    datasets: [{
+                        label: 'Distribution of Sample Means',
+                        data: meansHist.data,
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribution of Sample Means'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initial visualization
+        updateVisualization();
+    </script>
+</body>
+</html>
