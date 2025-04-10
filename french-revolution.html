@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paths of Revolution: French Revolution Simulator</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f1e9;
+            color: #333;
+        }
+        
+        h1, h2 {
+            color: #8b0000;
+            text-align: center;
+        }
+        
+        #game-container {
+            background-color: #fff;
+            border: 2px solid #8b0000;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        #character-creation, #game-content, #game-over, #consequence-screen {
+            display: none;
+        }
+        
+        #intro {
+            text-align: center;
+        }
+        
+        .faction-choice {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        
+        .faction-card {
+            width: 180px;
+            padding: 15px;
+            margin: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: center;
+        }
+        
+        .faction-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .faction-card.selected {
+            border: 2px solid #8b0000;
+            background-color: #f0e6e6;
+        }
+        
+        .faction-card h3 {
+            margin-top: 0;
+            color: #8b0000;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f0e6e6;
+            border-radius: 5px;
+        }
+        
+        .status-item {
+            text-align: center;
+        }
+        
+        .btn {
+            background-color: #8b0000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #6d0000;
+        }
+        
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .choice-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            margin: 10px 0;
+        }
+        
+        #event-image {
+            max-width: 100%;
+            height: auto;
+            margin: 15px auto;
+            display: block;
+            border-radius: 5px;
+        }
+        
+        #event-title {
+            color: #8b0000;
+            margin-bottom: 10px;
+        }
+        
+        #probability-info {
+            font-style: italic;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        #year-display {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-weight: bold;
+            color: #8b0000;
+        }
+        
+        .consequence-message {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f0e6e6;
+            border-left: 4px solid #8b0000;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .stat-changes {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+        
+        .stat-change {
+            display: inline-block;
+            margin-right: 15px;
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        
+        .stat-increase {
+            background-color: #e6f4e6;
+            color: #2e7d32;
+        }
+        
+        .stat-decrease {
+            background-color: #f9e0e0;
+            color: #c62828;
+        }
+        
+        .stat-neutral {
+            background-color: #e6e6e6;
+            color: #616161;
+        }
+        
+        @media (max-width: 600px) {
+            .faction-choice {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .faction-card {
+                width: 80%;
+            }
+            
+            .status-bar {
+                flex-wrap: wrap;
+            }
+            
+            .status-item {
+                width: 50%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Paths of Revolution</h1>
+    <h2>Survive the French Revolution (1792-1795)</h2>
+    
+    <div id="game-container">
+        <div id="year-display">1792</div>
+        
+        <div id="intro">
+            <p>France is in turmoil. King Louis XVI has been imprisoned, and the National Convention has just abolished the monarchy. The First French Republic has been established, but dangerous times lie ahead. Revolutionary factions vie for power while foreign armies threaten France's borders.</p>
+            <p>Will you survive these tumultuous years? Your choices will determine your fate.</p>
+            <button id="start-btn" class="btn">Begin Your Journey</button>
+        </div>
+        
+        <div id="character-creation">
+            <h3>Choose Your Faction</h3>
+            <p>Your political alignment will influence your starting conditions and options throughout the game.</p>
+            
+            <div class="faction-choice">
+                <div class="faction-card" data-faction="girondins">
+                    <h3>Girondins</h3>
+                    <p>Moderate republicans who favor a decentralized government and oppose radical measures.</p>
+                    <p><strong>+ Political Influence</strong><br><strong>- Popular Support</strong></p>
+                </div>
+                
+                <div class="faction-card" data-faction="jacobins">
+                    <h3>Jacobins</h3>
+                    <p>Radical republicans who support centralized power and revolutionary measures.</p>
+                    <p><strong>+ Radical Reputation</strong><br><strong>- Safety</strong></p>
+                </div>
+                
+                <div class="faction-card" data-faction="cordeliers">
+                    <h3>Cordeliers</h3>
+                    <p>Ultra-revolutionary group with strong ties to the sans-culottes working class.</p>
+                    <p><strong>+ Popular Support</strong><br><strong>- Wealth</strong></p>
+                </div>
+            </div>
+            
+            <button id="confirm-faction" class="btn" disabled>Confirm Choice</button>
+        </div>
+        
+        <div id="game-content">
+            <div class="status-bar">
+                <div class="status-item">
+                    <div><strong>Safety:</strong> <span id="safety-value">70</span>/100</div>
+                </div>
+                <div class="status-item">
+                    <div><strong>Influence:</strong> <span id="influence-value">50</span>/100</div>
+                </div>
+                <div class="status-item">
+                    <div><strong>Popularity:</strong> <span id="popularity-value">50</span>/100</div>
+                </div>
+                <div class="status-item">
+                    <div><strong>Wealth:</strong> <span id="wealth-value">50</span>/100</div>
+                </div>
+            </div>
+            
+            <h3 id="event-title">Event Title</h3>
+            <div id="event-text">Event description will appear here...</div>
+            <div id="event-choices"></div>
+            
+            <div id="probability-info"></div>
+        </div>
+        
+        <div id="consequence-screen">
+            <div class="status-bar">
+                <div class="status-item">
+                    <div><strong>Safety:</strong> <span id="consequence-safety-value">70</span>/100</div>
+                </div>
+                <div class="status-item">
+                    <div><strong>Influence:</strong> <span id="consequence-influence-value">50</span>/100</div>
+                </div>
+                <div class="status-item">
+                    <div><strong>Popularity:</strong> <span id="consequence-popularity-value">50</span>/100</div>
+                </div>
+                <div class="status-item">
+                    <div><strong>Wealth:</strong> <span id="consequence-wealth-value">50</span>/100</div>
+                </div>
+            </div>
+            
+            <h3 id="consequence-title">Consequences of Your Decision</h3>
+            <div class="consequence-message" id="consequence-message"></div>
+            
+            <div class="stat-changes" id="stat-changes"></div>
+            
+            <button id="continue-btn" class="btn">Continue</button>
+        </div>
+        
+        <div id="game-over">
+            <h3 id="ending-title"></h3>
+            <div id="ending-text"></div>
+            <button id="restart-btn" class="btn">Play Again</button>
+        </div>
+    </div>
+    
+    <script>
+        // Game state
+        const gameState = {
+            currentRound: 0,
+            maxRounds: 10,
+            year: 1792,
+            month: 9, // September
+            faction: "",
+            stats: {
+                safety: 70,
+                influence: 50,
+                popularity: 50,
+                wealth: 50
+            },
+            previousStats: {
+                safety: 70,
+                influence: 50,
+                popularity: 50,
+                wealth: 50
+            },
+            lastChoice: null,
+            eventHistory: [],
+            currentEventId: "start",
+            nextEventId: ""
+        };
+        
+        // DOM elements
+        const intro = document.getElementById("intro");
+        const characterCreation = document.getElementById("character-creation");
+        const gameContent = document.getElementById("game-content");
+        const consequenceScreen = document.getElementById("consequence-screen");
+        const gameOver = document.getElementById("game-over");
+        const yearDisplay = document.getElementById("year-display");
+        const eventTitle = document.getElementById("event-title");
+        const eventText = document.getElementById("event-text");
+        const eventChoices = document.getElementById("event-choices");
+        const probabilityInfo = document.getElementById("probability-info");
+        const consequenceMessage = document.getElementById("consequence-message");
+        const statChanges = document.getElementById("stat-changes");
+        
+        // Buttons and interactive elements
+        const startBtn = document.getElementById("start-btn");
+        const factionCards = document.querySelectorAll(".faction-card");
+        const confirmFactionBtn = document.getElementById("confirm-faction");
+        const continueBtn = document.getElementById("continue-btn");
+        const restartBtn = document.getElementById("restart-btn");
+        
+        // Initial setup
+        startBtn.addEventListener("click", showCharacterCreation);
+        restartBtn.addEventListener("click", restartGame);
+        continueBtn.addEventListener("click", continueAfterConsequence);
+        
+        factionCards.forEach(card => {
+            card.addEventListener("click", selectFaction);
+        });
+        
+        confirmFactionBtn.addEventListener("click", startGame);
+        
+        // Consequence messages for player choices
+        const consequenceMessages = {
+            "start": {
+                "Advocate for a fair trial for the King": "Your call for a fair legal process for Louis XVI marks you as more moderate than many revolutionaries. While this position aligns with legal principles, radical elements view it with suspicion.",
+                "Call for the King's immediate execution": "Your revolutionary fervor in demanding swift justice for the 'tyrant' resonates with the more radical factions. You gain credibility among hardliners but make enemies among moderates.",
+                "Focus on the war effort instead of the King's fate": "By shifting attention to external threats, you attempt to unify factions around a common enemy. Some appreciate this pragmatism, while others question your revolutionary commitment."
+            },
+            "kings_trial": {
+                "Publicly support the execution to prove your revolutionary credentials": "You join the crowds at the Place de la Révolution to witness Louis Capet's execution. Your visible support for this pivotal revolutionary act strengthens your radical reputation.",
+                "Express private reservations about the execution's legality": "Your legal scruples place you in a precarious position as the revolution grows more radical. While some respect your principles, others mark you as potentially counter-revolutionary.",
+                "Attend the execution and show no emotion": "Your stoic presence at the execution reveals nothing of your inner thoughts. This calculated neutrality keeps you from being associated with any faction too strongly."
+            },
+            "war_effort": {
+                "Advocate for military conscription through the levée en masse": "Your support for mass conscription demonstrates revolutionary commitment. The policy will eventually mobilize hundreds of thousands of citizens to defend the Republic.",
+                "Suggest negotiating with the Coalition powers": "Your call for diplomatic solutions is interpreted by many as defeatism or even treason. In wartime, suggestions of compromise can be politically dangerous.",
+                "Support emergency powers to the Convention to handle the crisis": "You back greater centralization of power to address the military crisis. This pragmatic approach strengthens the government but sets precedents that more radical elements will exploit."
+            },
+            "committee_formation": {
+                "Seek appointment to the Committee to influence its direction": "You maneuver to join this powerful new body, hoping to shape its policies from within. This ambitious move could increase your influence—or place you in greater danger.",
+                "Publicly criticize the concentration of power": "Your principled stand against centralizing authority marks you as either courageous or foolhardy. As the Committee grows more powerful, such criticism becomes increasingly dangerous.",
+                "Support the Committee while keeping a low profile": "You prudently back the Committee's formation while avoiding too much visibility. This cautious approach keeps you safer as revolutionary politics grow more volatile."
+            },
+            "girondin_purge": {
+                "Flee Paris and attempt to join federalist revolts in the provinces": "You escape the capital as Girondin deputies are arrested. The journey is perilous, as revolutionary committees control travel and check papers at every city gate.",
+                "Publicly disavow any Girondin sympathies": "You distance yourself from your former associates, perhaps saving yourself at the cost of your principles. The revolutionary crowd seems satisfied with your conversion.",
+                "Go into hiding in Paris with sympathetic friends": "You disappear into the labyrinthine streets of Paris, relying on a network of trusted allies to shelter you. Discovery would mean certain death."
+            },
+            "on_committee": {
+                "Advocate for moderation in the use of revolutionary tribunals": "You risk your position by arguing for more careful legal procedures. As executions accelerate, your voice of restraint grows increasingly isolated and dangerous.",
+                "Support Robespierre's policies to strengthen your position": "You align yourself with the ascendant Jacobin leader, embracing his calls for virtue and revolutionary justice. This calculated alliance improves your standing for now.",
+                "Focus on administering war production and supplies": "You immerse yourself in practical matters of logistics and production, avoiding the dangerous ideological battles while still serving the revolution effectively."
+            },
+            "terror_begins": {
+                "Participate in revolutionary committees to prove your loyalty": "You join a neighborhood surveillance committee, participating in the machinery of the Terror. Your revolutionary zeal helps ensure your safety as suspicion falls on others.",
+                "Attempt to protect innocent acquaintances from denunciation": "You quietly intervene to save those you believe unjustly accused, risking your own safety for your principles. This dangerous compassion could prove fatal if discovered.",
+                "Keep your head down and focus on personal survival": "You withdraw from public life as much as possible, avoiding political discussions and attending only mandatory civic ceremonies. Your absence is noted, but safety is your priority."
+            },
+            "height_of_terror": {
+                "Quietly gather allies against Robespierre's growing tyranny": "You begin carefully testing colleagues' loyalty to Robespierre, building a network of those concerned about his unchecked power. This conspiracy is necessary but extremely dangerous.",
+                "Publicly praise virtue and republican values to show alignment with Robespierre": "You echo Robespierre's language of virtue and purity, presenting yourself as ideologically aligned with his vision. This protects you for now as others fall to the guillotine.",
+                "Feign illness to avoid political activity during this dangerous time": "You withdraw from public view, claiming health problems. This temporary absence from political life reduces your influence but may save you from the coming bloodbath."
+            },
+            "challenging_extremists": {
+                "Secretly organize with other Committee members against Robespierre": "You begin the dangerous work of building a coalition against Robespierre within the Committee itself. Each conversation carries the risk of exposure and death.",
+                "Publicly question the excessive use of the guillotine": "In a moment of extraordinary courage (or recklessness), you publicly challenge the acceleration of executions. All eyes turn to you as Robespierre's gaze narrows.",
+                "Continue to work with Robespierre while looking for leverage": "You maintain the appearance of loyalty while searching for political ammunition against Robespierre. This duplicitous path is dangerous but potentially effective."
+            },
+            "robespierre_ally": {
+                "Warn potential targets of Robespierre's planned purge": "You secretly alert deputies who appear on Robespierre's lists, betraying his trust but potentially saving dozens of lives. This treachery would mean your death if discovered.",
+                "Stay loyal to Robespierre to the end": "You maintain your allegiance to the Incorruptible, believing in his vision of a Republic of Virtue despite growing extremism. Your fate is now tied to his.",
+                "Secretly join the conspiracy while maintaining Robespierre's trust": "You play a double game, appearing as Robespierre's ally while working with conspirators to bring him down. This dangerous balancing act could position you well if successful."
+            },
+            "thermidorian_conspiracy": {
+                "Lead the charge against Robespierre in the Convention": "You step forward at the crucial moment to denounce the tyrant, silencing his defenders with your oratory. Your courage might make you a hero—or a martyr if the conspiracy fails.",
+                "Support the conspiracy but stay in the background": "You add your voice to the chorus of criticism while letting others take the lead. This cautious approach is safer but limits your influence in the aftermath.",
+                "Hesitate and wait to see which side prevails": "You hold your tongue during the crucial debate, waiting to see if Robespierre or his enemies triumph. This political calculation could backfire badly."
+            },
+            "thermidorian_success": {
+                "Advocate for dismantling the machinery of the Terror": "You push for releasing prisoners, closing revolutionary tribunals, and restoring normal legal procedures. Your stance helps France step back from the abyss of revolutionary violence.",
+                "Target remaining radical Jacobins for punishment": "You channel revolutionary energies toward punishing yesterday's terrorists, supporting a counter-purge against former radicals. The hunters become the hunted.",
+                "Focus on addressing economic crisis and food shortages": "You prioritize practical problems over political revenge, working to stabilize food supplies and currency. This pragmatic approach addresses the people's most urgent needs."
+            },
+            "thermidorian_reaction": {
+                "Support the conservative reaction against former terrorists": "You join the swing toward conservative republicanism, supporting the suppression of radical clubs and the persecution of former terrorists. The revolution continues to devour its children.",
+                "Try to maintain revolutionary principles while opposing extremism": "You attempt to chart a middle course, preserving republican ideals while rejecting terrorist methods. This principled stance resonates with many exhausted by extremism.",
+                "Focus on personal enrichment during the political confusion": "You use your political connections to acquire confiscated properties and secure lucrative government contracts. While others debate principles, you build your fortune."
+            },
+            "white_terror": {
+                "Advocate for reconciliation and an end to political violence": "You call for healing and an end to retributive violence, arguing that France needs stability after years of bloodshed. Your moderate voice finds some receptive ears.",
+                "Quietly assist former radicals in escaping retribution": "You help former Jacobins escape persecution, providing money, false papers, or hiding places. This compassionate but dangerous activity puts you at risk from vengeful moderates.",
+                "Support the new conservative direction with enthusiasm": "You wholeheartedly embrace the conservative reaction, distancing yourself from revolutionary excesses. Your political flexibility serves you well in this changing environment."
+            },
+            "directory_formation": {
+                "Secure a position in the new government": "You successfully navigate the transition to the Directory, securing an official position in the new regime. Your political survival skills have served you well.",
+                "Retire from politics and focus on private business": "Exhausted by revolutionary turbulence, you withdraw from public life to focus on business affairs. After years of danger, the quiet life of commerce appeals strongly.",
+                "Write your memoirs of the Revolutionary period": "You begin documenting your extraordinary experiences during the Revolution. Your perspective on these world-changing events will shape how future generations understand this period."
+            }
+        };
+        
+        // Event data structure
+        const events = {
+            "start": {
+                title: "The Republic is Born",
+                text: "The National Convention has just declared France a republic on September 21, 1792. King Louis XVI is imprisoned, and war with Austria and Prussia continues. As a member of the {FACTION}, you must navigate these dangerous political waters.",
+                choices: [
+                    {
+                        text: "Advocate for a fair trial for the King",
+                        nextEvent: "kings_trial",
+                        effects: {
+                            girondins: { safety: +5, influence: +5, popularity: -10 },
+                            jacobins: { safety: -10, influence: -5, popularity: -5 },
+                            cordeliers: { safety: -15, influence: -10, popularity: -15 }
+                        }
+                    },
+                    {
+                        text: "Call for the King's immediate execution",
+                        nextEvent: "kings_trial",
+                        effects: {
+                            girondins: { safety: -15, influence: -10, popularity: +5 },
+                            jacobins: { safety: +5, influence: +10, popularity: +10 },
+                            cordeliers: { safety: +10, influence: +15, popularity: +15 }
+                        }
+                    },
+                    {
+                        text: "Focus on the war effort instead of the King's fate",
+                        nextEvent: "war_effort",
+                        effects: {
+                            girondins: { safety: 0, influence: 0, popularity: +5 },
+                            jacobins: { safety: 0, influence: -5, popularity: 0 },
+                            cordeliers: { safety: -5, influence: -5, popularity: -5 }
+                        }
+                    }
+                ]
+            },
+            "kings_trial": {
+                title: "The Trial of Louis XVI",
+                text: "January 1793: The King's trial has concluded. The Convention has voted for his execution, though many Girondins opposed it. The guillotine awaits Louis XVI. Your position during this critical event has been noted by powerful figures.",
+                choices: [
+                    {
+                        text: "Publicly support the execution to prove your revolutionary credentials",
+                        nextEvent: "committee_formation",
+                        effects: {
+                            girondins: { safety: -10, influence: -5, popularity: +10 },
+                            jacobins: { safety: +5, influence: +10, popularity: +5 },
+                            cordeliers: { safety: +10, influence: +5, popularity: +10 }
+                        }
+                    },
+                    {
+                        text: "Express private reservations about the execution's legality",
+                        nextEvent: "committee_formation",
+                        effects: {
+                            girondins: { safety: +5, influence: +10, popularity: -5 },
+                            jacobins: { safety: -15, influence: -10, popularity: -10 },
+                            cordeliers: { safety: -20, influence: -15, popularity: -20 }
+                        },
+                        failCondition: {
+                            faction: "cordeliers",
+                            stat: "safety",
+                            threshold: 30,
+                            outcome: "denounced_early"
+                        }
+                    },
+                    {
+                        text: "Attend the execution and show no emotion",
+                        nextEvent: "committee_formation",
+                        effects: {
+                            girondins: { safety: 0, influence: 0, popularity: 0 },
+                            jacobins: { safety: 0, influence: 0, popularity: 0 },
+                            cordeliers: { safety: 0, influence: 0, popularity: 0 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 4 }
+            },
+            "war_effort": {
+                title: "Military Crisis",
+                text: "Early 1793: While attention was focused on the King's trial, military setbacks have occurred. General Dumouriez is rumored to be considering defection, and the armies of the First Coalition are pressing on all fronts.",
+                choices: [
+                    {
+                        text: "Advocate for military conscription through the levée en masse",
+                        nextEvent: "committee_formation",
+                        effects: {
+                            girondins: { safety: 0, influence: -5, popularity: -5 },
+                            jacobins: { safety: +5, influence: +10, popularity: +5 },
+                            cordeliers: { safety: +10, influence: +10, popularity: +15 }
+                        }
+                    },
+                    {
+                        text: "Suggest negotiating with the Coalition powers",
+                        nextEvent: "committee_formation",
+                        effects: {
+                            girondins: { safety: -5, influence: 0, popularity: -10 },
+                            jacobins: { safety: -15, influence: -15, popularity: -15 },
+                            cordeliers: { safety: -20, influence: -20, popularity: -25 }
+                        },
+                        failCondition: {
+                            faction: "jacobins",
+                            stat: "safety",
+                            threshold: 40,
+                            outcome: "traitor_executed"
+                        }
+                    },
+                    {
+                        text: "Support emergency powers to the Convention to handle the crisis",
+                        nextEvent: "committee_formation",
+                        effects: {
+                            girondins: { safety: -5, influence: +5, popularity: 0 },
+                            jacobins: { safety: +10, influence: +10, popularity: +5 },
+                            cordeliers: { safety: +5, influence: +5, popularity: +10 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 4 }
+            },
+            "committee_formation": {
+                title: "The Committee of Public Safety",
+                text: "April 1793: Amid military defeats and counter-revolutionary uprisings, the Convention establishes the Committee of Public Safety. Maximilien Robespierre will soon rise to prominence within it. The Revolution is entering a more radical phase.",
+                choices: [
+                    {
+                        text: "Seek appointment to the Committee to influence its direction",
+                        nextEvent: function(state) {
+                            if (state.faction === "girondins" && state.stats.influence < 50) {
+                                return "girondin_purge";
+                            } else if (state.stats.influence > 70) {
+                                return "on_committee";
+                            } else {
+                                return "terror_begins";
+                            }
+                        },
+                        effects: {
+                            girondins: { safety: -10, influence: +5, popularity: 0 },
+                            jacobins: { safety: +5, influence: +15, popularity: +5 },
+                            cordeliers: { safety: 0, influence: +10, popularity: +10 }
+                        }
+                    },
+                    {
+                        text: "Publicly criticize the concentration of power",
+                        nextEvent: "girondin_purge",
+                        effects: {
+                            girondins: { safety: -20, influence: -10, popularity: +5 },
+                            jacobins: { safety: -15, influence: -10, popularity: -5 },
+                            cordeliers: { safety: -15, influence: -15, popularity: +5 }
+                        },
+                        failCondition: {
+                            stat: "safety",
+                            threshold: 35,
+                            outcome: "early_arrest"
+                        }
+                    },
+                    {
+                        text: "Support the Committee while keeping a low profile",
+                        nextEvent: "terror_begins",
+                        effects: {
+                            girondins: { safety: +5, influence: -10, popularity: -5 },
+                            jacobins: { safety: +10, influence: 0, popularity: 0 },
+                            cordeliers: { safety: +5, influence: -5, popularity: -5 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 2 }
+            },
+            "girondin_purge": {
+                title: "The Fall of the Girondins",
+                text: "June 1793: Radical Jacobins and sans-culottes have moved against the Girondin faction. The Convention, under pressure from armed crowds, has ordered the arrest of 29 Girondin deputies. A dangerous time for moderates.",
+                choices: [
+                    {
+                        text: "Flee Paris and attempt to join federalist revolts in the provinces",
+                        nextEvent: function(state) {
+                            return (Math.random() < 0.4) ? "provincial_capture" : "hiding_provinces";
+                        },
+                        effects: {
+                            girondins: { safety: -10, influence: -20, popularity: -10 },
+                            jacobins: { safety: -15, influence: -25, popularity: -15 },
+                            cordeliers: { safety: -20, influence: -30, popularity: -20 }
+                        }
+                    },
+                    {
+                        text: "Publicly disavow any Girondin sympathies",
+                        nextEvent: function(state) {
+                            if (state.faction === "girondins") {
+                                if (Math.random() < 0.7) {
+                                    return "denounced";
+                                } else {
+                                    return "terror_begins";
+                                }
+                            } else {
+                                return "terror_begins";
+                            }
+                        },
+                        effects: {
+                            girondins: { safety: +10, influence: -20, popularity: -15 },
+                            jacobins: { safety: +15, influence: 0, popularity: -5 },
+                            cordeliers: { safety: +10, influence: -5, popularity: -10 }
+                        }
+                    },
+                    {
+                        text: "Go into hiding in Paris with sympathetic friends",
+                        nextEvent: function(state) {
+                            return (Math.random() < 0.5) ? "discovered_hiding" : "terror_begins";
+                        },
+                        effects: {
+                            girondins: { safety: +5, influence: -15, popularity: -5 },
+                            jacobins: { safety: 0, influence: -20, popularity: -10 },
+                            cordeliers: { safety: -5, influence: -15, popularity: -5 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 1 }
+            },
+            "on_committee": {
+                title: "Serving the Revolution",
+                text: "July 1793: You have secured a position on the Committee of Public Safety. With this power comes great responsibility—and danger. The Committee is implementing increasingly harsh measures against perceived enemies.",
+                choices: [
+                    {
+                        text: "Advocate for moderation in the use of revolutionary tribunals",
+                        nextEvent: function(state) {
+                            return (state.stats.influence > 75) ? "challenging_extremists" : "denounced";
+                        },
+                        effects: {
+                            girondins: { safety: -15, influence: -10, popularity: +5 },
+                            jacobins: { safety: -10, influence: -15, popularity: -5 },
+                            cordeliers: { safety: -15, influence: -20, popularity: -10 }
+                        }
+                    },
+                    {
+                        text: "Support Robespierre's policies to strengthen your position",
+                        nextEvent: "height_of_terror",
+                        effects: {
+                            girondins: { safety: +10, influence: +5, popularity: -10 },
+                            jacobins: { safety: +15, influence: +10, popularity: +5 },
+                            cordeliers: { safety: +10, influence: +5, popularity: +10 }
+                        }
+                    },
+                    {
+                        text: "Focus on administering war production and supplies",
+                        nextEvent: "height_of_terror",
+                        effects: {
+                            girondins: { safety: +5, influence: 0, popularity: +5 },
+                            jacobins: { safety: +5, influence: -5, popularity: +5 },
+                            cordeliers: { safety: +5, influence: -5, popularity: +10 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 3 }
+            },
+            "terror_begins": {
+                title: "The Reign of Terror",
+                text: "September 1793: The Law of Suspects has been passed, giving the Revolutionary Tribunal broad powers. Executions are becoming daily events. Dechristianization campaigns are intensifying, and war continues on all fronts.",
+                choices: [
+                    {
+                        text: "Participate in revolutionary committees to prove your loyalty",
+                        nextEvent: "height_of_terror",
+                        effects: {
+                            girondins: { safety: +5, influence: 0, popularity: -10, wealth: -5 },
+                            jacobins: { safety: +10, influence: +5, popularity: +5, wealth: 0 },
+                            cordeliers: { safety: +15, influence: +10, popularity: +10, wealth: -5 }
+                        }
+                    },
+                    {
+                        text: "Attempt to protect innocent acquaintances from denunciation",
+                        nextEvent: function(state) {
+                            return (Math.random() < 0.4) ? "denounced" : "height_of_terror";
+                        },
+                        effects: {
+                            girondins: { safety: -15, influence: -5, popularity: +10, wealth: -5 },
+                            jacobins: { safety: -10, influence: -10, popularity: +5, wealth: -5 },
+                            cordeliers: { safety: -5, influence: -5, popularity: +15, wealth: -10 }
+                        }
+                    },
+                    {
+                        text: "Keep your head down and focus on personal survival",
+                        nextEvent: "height_of_terror",
+                        effects: {
+                            girondins: { safety: +10, influence: -15, popularity: -10, wealth: 0 },
+                            jacobins: { safety: +5, influence: -20, popularity: -15, wealth: 0 },
+                            cordeliers: { safety: 0, influence: -25, popularity: -20, wealth: 0 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 3 }
+            },
+            "provincial_capture": {
+                title: "Captured in the Provinces",
+                text: "You are captured while attempting to rally support against the Jacobin-controlled Convention. Revolutionary authorities show no mercy to those perceived as traitors.",
+                outcome: "captured_executed"
+            },
+            "hiding_provinces": {
+                title: "Life in Hiding",
+                text: "Winter 1793-1794: You have successfully hidden in the provinces, but your influence on events has diminished greatly. You hear troubling reports from Paris as the Terror intensifies.",
+                choices: [
+                    {
+                        text: "Attempt to quietly return to Paris under a false identity",
+                        nextEvent: function(state) {
+                            return (Math.random() < 0.6) ? "discovered_hiding" : "height_of_terror";
+                        },
+                        effects: {
+                            girondins: { safety: -20, influence: +5, popularity: 0, wealth: -10 },
+                            jacobins: { safety: -25, influence: +10, popularity: 0, wealth: -10 },
+                            cordeliers: { safety: -20, influence: +5, popularity: 0, wealth: -10 }
+                        }
+                    },
+                    {
+                        text: "Join a provincial counter-revolutionary movement",
+                        nextEvent: function(state) {
+                            return (Math.random() < 0.7) ? "provincial_capture" : "thermidorian_reaction";
+                        },
+                        effects: {
+                            girondins: { safety: -15, influence: +10, popularity: -5, wealth: -5 },
+                            jacobins: { safety: -15, influence: +10, popularity: -10, wealth: -5 },
+                            cordeliers: { safety: -15, influence: +5, popularity: -10, wealth: -5 }
+                        }
+                    },
+                    {
+                        text: "Remain hidden and wait for political winds to change",
+                        nextEvent: "thermidorian_reaction",
+                        effects: {
+                            girondins: { safety: +15, influence: -20, popularity: -10, wealth: -10 },
+                            jacobins: { safety: +15, influence: -25, popularity: -15, wealth: -10 },
+                            cordeliers: { safety: +15, influence: -25, popularity: -15, wealth: -10 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 6 }
+            },
+            "discovered_hiding": {
+                title: "Discovered!",
+                text: "Your hiding place has been discovered by zealous revolutionaries. You are quickly arrested and brought before the Revolutionary Tribunal, known for its swift and harsh judgments.",
+                outcome: "captured_executed"
+            },
+            "denounced": {
+                title: "Denounced!",
+                text: "A fellow revolutionary has denounced you as an enemy of the Republic. Whether from personal grudge or political calculation, the accusation is enough to seal your fate in these dangerous times.",
+                outcome: "denounced_executed"
+            },
+            "height_of_terror": {
+                title: "The Height of the Terror",
+                text: "Spring 1794: The Terror has reached new extremes. Robespierre and the Committee have eliminated their enemies on both the left (Hébertists) and right (Dantonists). No one feels safe as revolutionary justice becomes increasingly arbitrary.",
+                choices: [
+                    {
+                        text: "Quietly gather allies against Robespierre's growing tyranny",
+                        nextEvent: function(state) {
+                            if (state.stats.influence > 60 && state.stats.safety > 50) {
+                                return "thermidorian_conspiracy";
+                            } else if (state.stats.safety < 40) {
+                                return "denounced";
+                            } else {
+                                return "thermidorian_reaction";
+                            }
+                        },
+                        effects: {
+                            girondins: { safety: -15, influence: +10, popularity: +5, wealth: 0 },
+                            jacobins: { safety: -20, influence: +15, popularity: +5, wealth: 0 },
+                            cordeliers: { safety: -15, influence: +10, popularity: +10, wealth: 0 }
+                        }
+                    },
+                    {
+                        text: "Publicly praise virtue and republican values to show alignment with Robespierre",
+                        nextEvent: function(state) {
+                            return (state.faction === "jacobins" && state.stats.influence > 70) 
+                                ? "robespierre_ally" 
+                                : "thermidorian_reaction";
+                        },
+                        effects: {
+                            girondins: { safety: +5, influence: -5, popularity: -10, wealth: 0 },
+                            jacobins: { safety: +15, influence: +10, popularity: 0, wealth: 0 },
+                            cordeliers: { safety: +10, influence: +5, popularity: -5, wealth: 0 }
+                        }
+                    },
+                    {
+                        text: "Feign illness to avoid political activity during this dangerous time",
+                        nextEvent: "thermidorian_reaction",
+                        effects: {
+                            girondins: { safety: +10, influence: -15, popularity: -5, wealth: -5 },
+                            jacobins: { safety: +5, influence: -20, popularity: -10, wealth: -5 },
+                            cordeliers: { safety: +5, influence: -15, popularity: -10, wealth: -5 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 3 }
+            },
+            "challenging_extremists": {
+                title: "Challenging the Extremists",
+                text: "June 1794: Your position on the Committee gives you insight into Robespierre's increasingly paranoid behavior. The Law of 22 Prairial has accelerated executions to a frenzied pace. Something must be done.",
+                choices: [
+                    {
+                        text: "Secretly organize with other Committee members against Robespierre",
+                        nextEvent: "thermidorian_conspiracy",
+                        effects: {
+                            girondins: { safety: -20, influence: +15, popularity: +10, wealth: 0 },
+                            jacobins: { safety: -15, influence: +20, popularity: +15, wealth: 0 },
+                            cordeliers: { safety: -15, influence: +15, popularity: +10, wealth: 0 }
+                        }
+                    },
+                    {
+                        text: "Publicly question the excessive use of the guillotine",
+                        nextEvent: function(state) {
+                            return (Math.random() < 0.7) ? "denounced" : "thermidorian_conspiracy";
+                        },
+                        effects: {
+                            girondins: { safety: -25, influence: +5, popularity: +15, wealth: 0 },
+                            jacobins: { safety: -30, influence: 0, popularity: +10, wealth: 0 },
+                            cordeliers: { safety: -25, influence: 0, popularity: +15, wealth: 0 }
+                        },
+                        failCondition: {
+                            stat: "safety",
+                            threshold: 30,
+                            outcome: "denounced_executed"
+                        }
+                    },
+                    {
+                        text: "Continue to work with Robespierre while looking for leverage",
+                        nextEvent: "robespierre_ally",
+                        effects: {
+                            girondins: { safety: +5, influence: -5, popularity: -15, wealth: +5 },
+                            jacobins: { safety: +15, influence: +10, popularity: -5, wealth: +5 },
+                            cordeliers: { safety: +10, influence: +5, popularity: -10, wealth: +5 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 1 }
+            },
+            "robespierre_ally": {
+                title: "Robespierre's Inner Circle",
+                text: "July 1794: You have become one of Robespierre's trusted allies. He speaks increasingly of purging more 'enemies of virtue' from the Convention itself. His paranoia is growing, and tensions within the Committee are rising.",
+                choices: [
+                    {
+                        text: "Warn potential targets of Robespierre's planned purge",
+                        nextEvent: function(state) {
+                            return (Math.random() < 0.3) ? "denounced" : "thermidorian_conspiracy";
+                        },
+                        effects: {
+                            girondins: { safety: -25, influence: +10, popularity: +15, wealth: 0 },
+                            jacobins: { safety: -30, influence: +5, popularity: +10, wealth: 0 },
+                            cordeliers: { safety: -25, influence: +5, popularity: +15, wealth: 0 }
+                        }
+                    },
+                    {
+                        text: "Stay loyal to Robespierre to the end",
+                        nextEvent: "fall_with_robespierre",
+                        effects: {
+                            girondins: { safety: -20, influence: +5, popularity: -10, wealth: +5 },
+                            jacobins: { safety: -15, influence: +10, popularity: -5, wealth: +10 },
+                            cordeliers: { safety: -20, influence: +5, popularity: -10, wealth: +5 }
+                        }
+                    },
+                    {
+                        text: "Secretly join the conspiracy while maintaining Robespierre's trust",
+                        nextEvent: "thermidorian_conspiracy",
+                        effects: {
+                            girondins: { safety: -10, influence: +15, popularity: +10, wealth: 0 },
+                            jacobins: { safety: -5, influence: +20, popularity: +15, wealth: 0 },
+                            cordeliers: { safety: -10, influence: +15, popularity: +10, wealth: 0 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 1 }
+            },
+            "thermidorian_conspiracy": {
+                title: "The Thermidorian Conspiracy",
+                text: "July 27, 1794 (9 Thermidor): The day has come. After Robespierre's threatening speech at the Convention, a coalition of frightened deputies is ready to move against him. Everything depends on the next few hours.",
+                choices: [
+                    {
+                        text: "Lead the charge against Robespierre in the Convention",
+                        nextEvent: function(state) {
+                            if (state.stats.influence > 70) {
+                                return "thermidorian_success";
+                            } else if (Math.random() < 0.6) {
+                                return "thermidorian_success";
+                            } else {
+                                return "fall_with_robespierre";
+                            }
+                        },
+                        effects: {
+                            girondins: { safety: -15, influence: +20, popularity: +15, wealth: 0 },
+                            jacobins: { safety: -10, influence: +25, popularity: +10, wealth: 0 },
+                            cordeliers: { safety: -15, influence: +20, popularity: +15, wealth: 0 }
+                        }
+                    },
+                    {
+                        text: "Support the conspiracy but stay in the background",
+                        nextEvent: "thermidorian_reaction",
+                        effects: {
+                            girondins: { safety: +5, influence: +5, popularity: +5, wealth: 0 },
+                            jacobins: { safety: +10, influence: +10, popularity: 0, wealth: 0 },
+                            cordeliers: { safety: +5, influence: +5, popularity: +5, wealth: 0 }
+                        }
+                    },
+                    {
+                        text: "Hesitate and wait to see which side prevails",
+                        nextEvent: function(state) {
+                            if (Math.random() < 0.7) {
+                                return "thermidorian_reaction";
+                            } else {
+                                return "denounced";
+                            }
+                        },
+                        effects: {
+                            girondins: { safety: -5, influence: -15, popularity: -10, wealth: 0 },
+                            jacobins: { safety: -10, influence: -20, popularity: -15, wealth: 0 },
+                            cordeliers: { safety: -5, influence: -15, popularity: -10, wealth: 0 }
+                        }
+                    }
+                ],
+                advanceTime: { days: 1 }
+            },
+            "fall_with_robespierre": {
+                title: "Falling with Robespierre",
+                text: "July 28, 1794: The conspiracy against Robespierre has succeeded. He and his closest allies have been arrested and condemned without trial. As one of his associates, you share his fate.",
+                outcome: "robespierre_executed"
+            },
+            "thermidorian_success": {
+                title: "Thermidorian Success",
+                text: "July 28, 1794: Victory! Robespierre and his closest allies have been guillotined. As a leader of the Thermidorian Reaction, you now have significant influence in shaping the next phase of the Revolution.",
+                choices: [
+                    {
+                        text: "Advocate for dismantling the machinery of the Terror",
+                        nextEvent: "directory_formation",
+                        effects: {
+                            girondins: { safety: +20, influence: +15, popularity: +10, wealth: +5 },
+                            jacobins: { safety: +15, influence: +10, popularity: +5, wealth: +5 },
+                            cordeliers: { safety: +10, influence: +5, popularity: +15, wealth: +5 }
+                        }
+                    },
+                    {
+                        text: "Target remaining radical Jacobins for punishment",
+                        nextEvent: "white_terror",
+                        effects: {
+                            girondins: { safety: +15, influence: +10, popularity: -5, wealth: +10 },
+                            jacobins: { safety: -10, influence: -5, popularity: -15, wealth: +5 },
+                            cordeliers: { safety: +5, influence: 0, popularity: -10, wealth: +5 }
+                        }
+                    },
+                    {
+                        text: "Focus on addressing economic crisis and food shortages",
+                        nextEvent: "directory_formation",
+                        effects: {
+                            girondins: { safety: +10, influence: +5, popularity: +15, wealth: -5 },
+                            jacobins: { safety: +5, influence: 0, popularity: +10, wealth: -5 },
+                            cordeliers: { safety: +10, influence: +5, popularity: +20, wealth: -10 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 1 }
+            },
+            "thermidorian_reaction": {
+                title: "The Thermidorian Reaction",
+                text: "August 1794: With Robespierre gone, the Revolution has changed course. The Terror is being dismantled, and many former radicals now emphasize moderation. Imprisoned suspects are being released, while surviving Girondins are returning to positions of influence.",
+                choices: [
+                    {
+                        text: "Support the conservative reaction against former terrorists",
+                        nextEvent: "white_terror",
+                        effects: {
+                            girondins: { safety: +15, influence: +10, popularity: -5, wealth: +10 },
+                            jacobins: { safety: -10, influence: -15, popularity: -15, wealth: +5 },
+                            cordeliers: { safety: -5, influence: -10, popularity: -10, wealth: +5 }
+                        }
+                    },
+                    {
+                        text: "Try to maintain revolutionary principles while opposing extremism",
+                        nextEvent: "directory_formation",
+                        effects: {
+                            girondins: { safety: +5, influence: +10, popularity: +15, wealth: 0 },
+                            jacobins: { safety: 0, influence: +5, popularity: +10, wealth: 0 },
+                            cordeliers: { safety: +5, influence: +10, popularity: +15, wealth: -5 }
+                        }
+                    },
+                    {
+                        text: "Focus on personal enrichment during the political confusion",
+                        nextEvent: "directory_formation",
+                        effects: {
+                            girondins: { safety: +5, influence: -5, popularity: -15, wealth: +25 },
+                            jacobins: { safety: 0, influence: -10, popularity: -20, wealth: +30 },
+                            cordeliers: { safety: +5, influence: -5, popularity: -15, wealth: +25 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 3 }
+            },
+            "white_terror": {
+                title: "The White Terror",
+                text: "Winter 1794-1795: The tables have turned. Former radicals and Jacobins are now being hunted down by angry citizens and moderates. Violence against revolutionaries erupts across France, and public opinion has shifted dramatically.",
+                choices: [
+                    {
+                        text: "Advocate for reconciliation and an end to political violence",
+                        nextEvent: "directory_formation",
+                        effects: {
+                            girondins: { safety: +5, influence: +10, popularity: +15, wealth: 0 },
+                            jacobins: { safety: -10, influence: -5, popularity: +5, wealth: -5 },
+                            cordeliers: { safety: -5, influence: 0, popularity: +10, wealth: -5 }
+                        }
+                    },
+                    {
+                        text: "Quietly assist former radicals in escaping retribution",
+                        nextEvent: function(state) {
+                            return (Math.random() < 0.3) ? "final_arrest" : "directory_formation";
+                        },
+                        effects: {
+                            girondins: { safety: -10, influence: -5, popularity: -10, wealth: -10 },
+                            jacobins: { safety: -15, influence: -10, popularity: -5, wealth: -10 },
+                            cordeliers: { safety: -15, influence: -5, popularity: 0, wealth: -15 }
+                        }
+                    },
+                    {
+                        text: "Support the new conservative direction with enthusiasm",
+                        nextEvent: "directory_formation",
+                        effects: {
+                            girondins: { safety: +15, influence: +15, popularity: -5, wealth: +15 },
+                            jacobins: { safety: +10, influence: -10, popularity: -20, wealth: +10 },
+                            cordeliers: { safety: +10, influence: -5, popularity: -15, wealth: +10 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 4 }
+            },
+            "final_arrest": {
+                title: "A Final Arrest",
+                text: "Your assistance to former radicals has been discovered. In the reactionary climate, even your past services to the Thermidorian cause cannot save you from punishment.",
+                outcome: "final_imprisonment"
+            },
+            "directory_formation": {
+                title: "The Directory Takes Power",
+                text: "October 1795: A new constitution has established the Directory, a more conservative republican government. The sans-culottes have been suppressed, and a young general named Napoleon Bonaparte is gaining fame. The radical phase of the Revolution is over.",
+                choices: [
+                    {
+                        text: "Secure a position in the new government",
+                        nextEvent: "survive_directory",
+                        effects: {
+                            girondins: { safety: +15, influence: +15, popularity: +5, wealth: +15 },
+                            jacobins: { safety: +5, influence: +5, popularity: -5, wealth: +10 },
+                            cordeliers: { safety: +10, influence: +10, popularity: 0, wealth: +10 }
+                        },
+                        successCondition: {
+                            stat: "influence",
+                            threshold: 60,
+                            outcome: "high_position"
+                        }
+                    },
+                    {
+                        text: "Retire from politics and focus on private business",
+                        nextEvent: "survive_directory",
+                        effects: {
+                            girondins: { safety: +20, influence: -25, popularity: -5, wealth: +20 },
+                            jacobins: { safety: +25, influence: -30, popularity: -10, wealth: +25 },
+                            cordeliers: { safety: +20, influence: -25, popularity: -5, wealth: +20 }
+                        }
+                    },
+                    {
+                        text: "Write your memoirs of the Revolutionary period",
+                        nextEvent: "survive_directory",
+                        effects: {
+                            girondins: { safety: +10, influence: +5, popularity: +15, wealth: +5 },
+                            jacobins: { safety: +5, influence: 0, popularity: +10, wealth: +5 },
+                            cordeliers: { safety: +10, influence: +5, popularity: +15, wealth: +5 }
+                        }
+                    }
+                ],
+                advanceTime: { months: 5 }
+            },
+            "survive_directory": {
+                title: "A New Era Begins",
+                text: "Early 1796: You have survived the most tumultuous years of the French Revolution. Though the Republic continues to face challenges, the worst of the violence is over. Your experiences during this extraordinary time will shape the rest of your life.",
+                outcome: "survived_revolution"
+            }
+        };
+        
+        // Game endings
+        const endings = {
+            "denounced_early": {
+                title: "Denounced as a Counter-Revolutionary",
+                text: "Your moderate stance on the King has marked you as a potential royalist sympathizer. In these dangerous times, such suspicions are fatal. You are arrested and, after a brief show trial, sent to the guillotine."
+            },
+            "traitor_executed": {
+                title: "Executed as a Traitor",
+                text: "Your suggestion to negotiate with France's enemies is seen as treason during wartime. You are quickly arrested, given a perfunctory trial, and executed as an example to others."
+            },
+            "early_arrest": {
+                title: "Victim of Revolutionary Justice",
+                text: "Your public criticism of the Committee of Public Safety has brought their wrath upon you. You are arrested and swiftly condemned by the Revolutionary Tribunal."
+            },
+            "captured_executed": {
+                title: "Executed as a Federalist",
+                text: "Captured while attempting to rally provincial resistance, you are returned to Paris in chains. After a show trial, you face the guillotine as an enemy of the Republic."
+            },
+            "denounced_executed": {
+                title: "Victim of the Terror",
+                text: "Denounced by your enemies, you are arrested and brought before the Revolutionary Tribunal. With conviction rates near 90%, your fate is sealed. You are executed during the height of the Terror."
+            },
+            "robespierre_executed": {
+                title: "Falling with Robespierre",
+                text: "As one of Robespierre's allies, you share his fate after the Thermidorian coup. Without even the formality of a trial, you are guillotined alongside him on 10 Thermidor (July 28, 1794)."
+            },
+            "final_imprisonment": {
+                title: "Imprisoned During the White Terror",
+                text: "The Revolution has come full circle, with former radicals now the victims. You are imprisoned, though you avoid execution. You will remain detained until the political situation stabilizes."
+            },
+            "survived_revolution": {
+                title: "Survivor of the Revolution",
+                text: "Against all odds, you have navigated the dangerous currents of the French Revolution. While many of your contemporaries met violent ends, you have emerged to see France enter a new, more stable phase. Your experiences during this extraordinary period will remain with you forever."
+            },
+            "high_position": {
+                title: "Rising with the Directory",
+                text: "Your political acumen has earned you a prominent position in the new Directory government. Though the Revolution has moderated, your influence continues to grow. The lessons of the past years have taught you the value of pragmatism and adaptability in volatile times."
+            }
+        };
+        
+        // Function to save previous stats before updates
+        function savePreviousStats() {
+            for (const stat in gameState.stats) {
+                gameState.previousStats[stat] = gameState.stats[stat];
+            }
+        }
+        
+        // Function to update game stats
+        function updateStats(effects) {
+            const playerFaction = gameState.faction;
+            const factionEffects = effects[playerFaction] || {};
+            
+            savePreviousStats();
+            
+            for (const [stat, value] of Object.entries(factionEffects)) {
+                if (gameState.stats[stat] !== undefined) {
+                    gameState.stats[stat] += value;
+                    // Keep stats within bounds
+                    gameState.stats[stat] = Math.max(0, Math.min(100, gameState.stats[stat]));
+                    
+                    // Update UI
+                    const statElement = document.getElementById(`${stat}-value`);
+                    if (statElement) {
+                        statElement.textContent = gameState.stats[stat];
+                    }
+                }
+            }
+        }
+        
+        // Function to advance time
+        function advanceTime(timeChange) {
+            if (!timeChange) return;
+            
+            if (timeChange.months) {
+                gameState.month += timeChange.months;
+                while (gameState.month > 12) {
+                    gameState.month -= 12;
+                    gameState.year++;
+                }
+            }
+            
+            if (timeChange.days) {
+                // Simplified day advancement, just for Thermidor events
+                gameState.month += Math.floor(timeChange.days / 30);
+                while (gameState.month > 12) {
+                    gameState.month -= 12;
+                    gameState.year++;
+                }
+            }
+            
+            yearDisplay.textContent = gameState.year;
+            const consequenceYearDisplay = document.getElementById("year-display").cloneNode(true);
+            document.getElementById("consequence-screen").appendChild(consequenceYearDisplay);
+        }
+        
+        // Function to display consequences
+        function showConsequences(choiceText, effects, nextEventId) {
+            // Hide game content
+            gameContent.style.display = "none";
+            
+            // Show consequence screen
+            consequenceScreen.style.display = "block";
+            
+            // Find consequence message
+            const message = consequenceMessages[gameState.currentEventId]?.[choiceText] || 
+                           "Your decision has consequences that will unfold in the coming months.";
+            
+            // Display message
+            consequenceMessage.textContent = message;
+            
+            // Update stats display
+            for (const stat in gameState.stats) {
+                const statElement = document.getElementById(`consequence-${stat}-value`);
+                if (statElement) {
+                    statElement.textContent = gameState.stats[stat];
+                }
+            }
+            
+            // Show stat changes
+            statChanges.innerHTML = "";
+            const playerFaction = gameState.faction;
+            const factionEffects = effects[playerFaction] || {};
+            
+            for (const [stat, value] of Object.entries(factionEffects)) {
+                if (gameState.stats[stat] !== undefined) {
+                    const statChange = document.createElement("div");
+                    statChange.className = "stat-change " + 
+                        (value > 0 ? "stat-increase" : value < 0 ? "stat-decrease" : "stat-neutral");
+                    
+                    const sign = value > 0 ? "+" : "";
+                    statChange.textContent = `${stat.charAt(0).toUpperCase() + stat.slice(1)}: ${sign}${value}`;
+                    
+                    statChanges.appendChild(statChange);
+                }
+            }
+            
+            // Store next event ID for continue button
+            gameState.nextEventId = nextEventId;
+        }
+        
+        // Function to continue after showing consequences
+        function continueAfterConsequence() {
+            // Hide consequence screen
+            consequenceScreen.style.display = "none";
+            
+            // If we have a stored event ID, display that event
+            if (gameState.nextEventId) {
+                displayEvent(gameState.nextEventId);
+            }
+        }
+        
+        // Function to display an event
+        function displayEvent(eventId) {
+            gameState.currentEventId = eventId;
+            const event = events[eventId];
+            
+            if (!event) {
+                console.error("Event not found:", eventId);
+                return;
+            }
+            
+            // If this is an outcome event, handle it specially
+            if (event.outcome) {
+                return endGame(event.outcome);
+            }
+            
+            // Show game content
+            gameContent.style.display = "block";
+            
+            // Update game round counter
+            gameState.currentRound++;
+            
+            // Display event title and text
+            eventTitle.textContent = event.title;
+            
+            // Replace {FACTION} placeholder with actual faction
+            let factionName = "";
+            switch (gameState.faction) {
+                case "girondins": factionName = "Girondins"; break;
+                case "jacobins": factionName = "Jacobins"; break;
+                case "cordeliers": factionName = "Cordeliers"; break;
+            }
+            
+            eventText.textContent = event.text.replace("{FACTION}", factionName);
+            
+            // Clear previous choices
+            eventChoices.innerHTML = "";
+            
+            // Add new choices
+            event.choices.forEach((choice, index) => {
+                const button = document.createElement("button");
+                button.className = "btn choice-btn";
+                button.textContent = choice.text;
+                
+                button.addEventListener("click", () => {
+                    gameState.lastChoice = choice.text;
+                    
+                    // Apply stat effects
+                    if (choice.effects) {
+                        updateStats(choice.effects);
+                    }
+                    
+                    // Check for failure conditions
+                    if (choice.failCondition) {
+                        const condition = choice.failCondition;
+                        
+                        // Check if faction-specific condition applies
+                        if (condition.faction && condition.faction !== gameState.faction) {
+                            // No failure, proceed normally
+                        } else if (gameState.stats[condition.stat] < condition.threshold) {
+                            return endGame(condition.outcome);
+                        }
+                    }
+                    
+                    // Check for success conditions (special positive outcome)
+                    if (choice.successCondition) {
+                        const condition = choice.successCondition;
+                        if (gameState.stats[condition.stat] >= condition.threshold) {
+                            return endGame(condition.outcome);
+                        }
+                    }
+                    
+                    // Advance time if specified
+                    if (event.advanceTime) {
+                        advanceTime(event.advanceTime);
+                    }
+                    
+                    // Determine next event
+                    let nextEventId;
+                    if (typeof choice.nextEvent === "function") {
+                        nextEventId = choice.nextEvent(gameState);
+                    } else {
+                        nextEventId = choice.nextEvent;
+                    }
+                    
+                    // Show consequences before moving to next event
+                    showConsequences(choice.text, choice.effects, nextEventId);
+                });
+                
+                eventChoices.appendChild(button);
+            });
+            
+            // Add probability info
+            probabilityInfo.textContent = "In the chaos of revolution, even the best decisions can lead to unexpected outcomes. Choose wisely.";
+        }
+        
+        // Function to end the game and show outcome
+        function endGame(outcomeId) {
+            const outcome = endings[outcomeId];
+            
+            if (!outcome) {
+                console.error("Ending not found:", outcomeId);
+                return;
+            }
+            
+            // Hide game content and consequence screen
+            gameContent.style.display = "none";
+            consequenceScreen.style.display = "none";
+            gameOver.style.display = "block";
+            
+            // Display ending
+            document.getElementById("ending-title").textContent = outcome.title;
+            document.getElementById("ending-text").textContent = outcome.text;
+        }
+        
+        // Function to show character creation
+        function showCharacterCreation() {
+            intro.style.display = "none";
+            characterCreation.style.display = "block";
+        }
+        
+        // Function to select faction
+        function selectFaction() {
+            // Remove selected class from all cards
+            factionCards.forEach(card => {
+                card.classList.remove("selected");
+            });
+            
+            // Add selected class to the clicked card
+            this.classList.add("selected");
+            
+            // Store selected faction
+            gameState.faction = this.dataset.faction;
+            
+            // Enable confirm button
+            confirmFactionBtn.disabled = false;
+        }
+        
+        // Function to start game
+        function startGame() {
+            // Set initial stats based on faction
+            switch (gameState.faction) {
+                case "girondins":
+                    gameState.stats.safety = 60;
+                    gameState.stats.influence = 70;
+                    gameState.stats.popularity = 40;
+                    gameState.stats.wealth = 60;
+                    break;
+                case "jacobins":
+                    gameState.stats.safety = 50;
+                    gameState.stats.influence = 60;
+                    gameState.stats.popularity = 60;
+                    gameState.stats.wealth = 50;
+                    break;
+                case "cordeliers":
+                    gameState.stats.safety = 40;
+                    gameState.stats.influence = 50;
+                    gameState.stats.popularity = 80;
+                    gameState.stats.wealth = 30;
+                    break;
+            }
+            
+            // Update UI stats
+            for (const stat in gameState.stats) {
+                const element = document.getElementById(`${stat}-value`);
+                if (element) {
+                    element.textContent = gameState.stats[stat];
+                }
+                
+                const consequenceElement = document.getElementById(`consequence-${stat}-value`);
+                if (consequenceElement) {
+                    consequenceElement.textContent = gameState.stats[stat];
+                }
+                
+                // Initialize previous stats
+                gameState.previousStats[stat] = gameState.stats[stat];
+            }
+            
+            // Hide character creation and show game content
+            characterCreation.style.display = "none";
+            gameContent.style.display = "block";
+            
+            // Start the first event
+            displayEvent("start");
+        }
+        
+        // Function to restart the game
+        function restartGame() {
+            // Reset game state
+            gameState.currentRound = 0;
+            gameState.year = 1792;
+            gameState.month = 9;
+            gameState.faction = "";
+            gameState.stats = {
+                safety: 70,
+                influence: 50,
+                popularity: 50,
+                wealth: 50
+            };
+            gameState.previousStats = {
+                safety: 70,
+                influence: 50,
+                popularity: 50,
+                wealth: 50
+            };
+            gameState.lastChoice = null;
+            gameState.eventHistory = [];
+            gameState.currentEventId = "start";
+            gameState.nextEventId = "";
+            
+            // Update UI
+            yearDisplay.textContent = gameState.year;
+            
+            // Hide all screens except intro
+            intro.style.display = "block";
+            characterCreation.style.display = "none";
+            gameContent.style.display = "none";
+            consequenceScreen.style.display = "none";
+            gameOver.style.display = "none";
+            
+            // Reset faction selection
+            factionCards.forEach(card => {
+                card.classList.remove("selected");
+            });
+            confirmFactionBtn.disabled = true;
+        }
+    </script>
+</body>
+</html>

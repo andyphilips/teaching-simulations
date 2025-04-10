@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Central Limit Theorem Demonstration</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .stats-box {
+            background: #eef;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Central Limit Theorem Interactive Demonstration</h1>
+    
+    <div class="controls">
+        <div class="control-group">
+            <h3>Distribution Parameters</h3>
+            <select id="distribution" onchange="updateDistribution()">
+                <option value="normal">Normal Distribution</option>
+                <option value="uniform">Uniform Distribution</option>
+                <option value="poisson">Poisson Distribution</option>
+            </select>
+            <div id="paramControls">
+                <div id="normalParams">
+                    <label>Mean (μ): <input type="number" id="normalMean" value="0" step="1"></label>
+                    <label>Standard Deviation (σ): <input type="number" id="normalSD" value="1" min="0.1" step="0.1"></label>
+                </div>
+                <div id="uniformParams" style="display:none">
+                    <label>Minimum (a): <input type="number" id="uniformMin" value="0"></label>
+                    <label>Maximum (b): <input type="number" id="uniformMax" value="1"></label>
+                </div>
+                <div id="poissonParams" style="display:none">
+                    <label>Lambda (λ): <input type="number" id="poissonLambda" value="5" min="0.1" step="0.1"></label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h3>Sampling Parameters</h3>
+            <label>Sample Size (n):
+                <input type="number" id="sampleSize" value="30" min="1" max="1000">
+            </label>
+            <label>Number of Samples:
+                <input type="number" id="numSamples" value="1000" min="100" max="10000">
+            </label>
+            <button onclick="runSimulation()">Run Simulation</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stats-box">
+            <h3>Population Parameters</h3>
+            <p>Mean (μ): <span id="popMean"></span></p>
+            <p>Variance (σ²): <span id="popVariance"></span></p>
+        </div>
+        <div class="stats-box">
+            <h3>Sample Statistics</h3>
+            <p>Sample Mean (x̄): <span id="sampleMean"></span></p>
+            <p>Sample Variance (s²): <span id="sampleVariance"></span></p>
+            <p>Standard Error (SE): <span id="standardError"></span></p>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <div>
+            <h3>Sampling Distribution of Means</h3>
+            <canvas id="samplingChart"></canvas>
+        </div>
+        <div>
+            <h3>Random Sample Distribution</h3>
+            <canvas id="sampleChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let sampleChart, samplingChart;
+
+        function initCharts() {
+            const ctx1 = document.getElementById('sampleChart').getContext('2d');
+            const ctx2 = document.getElementById('samplingChart').getContext('2d');
+
+            sampleChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Sample Distribution',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            samplingChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Sampling Distribution',
+                        data: [],
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateDistribution() {
+            const dist = document.getElementById('distribution').value;
+            document.getElementById('normalParams').style.display = dist === 'normal' ? 'block' : 'none';
+            document.getElementById('uniformParams').style.display = dist === 'uniform' ? 'block' : 'none';
+            document.getElementById('poissonParams').style.display = dist === 'poisson' ? 'block' : 'none';
+        }
+
+        function generateSample(dist, params, size) {
+            let sample = [];
+            if (dist === 'normal') {
+                for (let i = 0; i < size; i++) {
+                    // Box-Muller transform
+                    const u1 = Math.random();
+                    const u2 = Math.random();
+                    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                    sample.push(z * params.sd + params.mean);
+                }
+            } else if (dist === 'uniform') {
+                for (let i = 0; i < size; i++) {
+                    sample.push(Math.random() * (params.max - params.min) + params.min);
+                }
+            } else if (dist === 'poisson') {
+                for (let i = 0; i < size; i++) {
+                    let L = Math.exp(-params.lambda);
+                    let k = 0;
+                    let p = 1;
+                    do {
+                        k++;
+                        p *= Math.random();
+                    } while (p > L);
+                    sample.push(k - 1);
+                }
+            }
+            return sample;
+        }
+
+        function calculateStats(data) {
+            const mean = data.reduce((a, b) => a + b) / data.length;
+            const variance = data.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (data.length - 1);
+            return { mean, variance };
+        }
+
+        function createHistogram(data, bins) {
+            const min = Math.min(...data);
+            const max = Math.max(...data);
+            const binWidth = (max - min) / bins;
+            const histogram = Array(bins).fill(0);
+            const binEdges = Array(bins + 1).fill(0).map((_, i) => min + i * binWidth);
+            
+            data.forEach(value => {
+                const binIndex = Math.min(Math.floor((value - min) / binWidth), bins - 1);
+                histogram[binIndex]++;
+            });
+
+            return { counts: histogram, edges: binEdges };
+        }
+
+        function runSimulation() {
+            const dist = document.getElementById('distribution').value;
+            const sampleSize = parseInt(document.getElementById('sampleSize').value);
+            const numSamples = parseInt(document.getElementById('numSamples').value);
+
+            let params;
+            if (dist === 'normal') {
+                params = {
+                    mean: parseFloat(document.getElementById('normalMean').value),
+                    sd: parseFloat(document.getElementById('normalSD').value)
+                };
+            } else if (dist === 'uniform') {
+                params = {
+                    min: parseFloat(document.getElementById('uniformMin').value),
+                    max: parseFloat(document.getElementById('uniformMax').value)
+                };
+            } else {
+                params = {
+                    lambda: parseFloat(document.getElementById('poissonLambda').value)
+                };
+            }
+
+            // Calculate theoretical parameters
+            let theoreticalMean, theoreticalVariance;
+            if (dist === 'normal') {
+                theoreticalMean = params.mean;
+                theoreticalVariance = params.sd * params.sd;
+            } else if (dist === 'uniform') {
+                theoreticalMean = (params.min + params.max) / 2;
+                theoreticalVariance = Math.pow(params.max - params.min, 2) / 12;
+            } else {
+                theoreticalMean = params.lambda;
+                theoreticalVariance = params.lambda;
+            }
+
+            // Generate samples and calculate means
+            const sampleMeans = [];
+            const samples = [];
+            for (let i = 0; i < numSamples; i++) {
+                const sample = generateSample(dist, params, sampleSize);
+                samples.push(sample);
+                sampleMeans.push(calculateStats(sample).mean);
+            }
+
+            // Randomly select one sample for display
+            const randomSampleIndex = Math.floor(Math.random() * samples.length);
+            const randomSample = samples[randomSampleIndex];
+            const randomSampleStats = calculateStats(randomSample);
+
+            // Calculate and update sampling distribution statistics
+            const samplingStats = calculateStats(sampleMeans);
+            document.getElementById('popMean').textContent = samplingStats.mean.toFixed(4);
+            document.getElementById('popVariance').textContent = samplingStats.variance.toFixed(4);
+            document.getElementById('sampleMean').textContent = randomSampleStats.mean.toFixed(4);
+            document.getElementById('sampleVariance').textContent = randomSampleStats.variance.toFixed(4);
+            document.getElementById('standardError').textContent = Math.sqrt(theoreticalVariance / sampleSize).toFixed(4);
+
+            // Update charts
+            const sampleHist = createHistogram(randomSample, 20);
+            const samplingHist = createHistogram(sampleMeans, 30);
+
+            sampleChart.data.labels = sampleHist.edges.slice(0, -1).map(x => x.toFixed(2));
+            sampleChart.data.datasets[0].data = sampleHist.counts;
+            sampleChart.update();
+
+            samplingChart.data.labels = samplingHist.edges.slice(0, -1).map(x => x.toFixed(2));
+            samplingChart.data.datasets[0].data = samplingHist.counts;
+            samplingChart.update();
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initCharts();
+            updateDistribution();
+            runSimulation();
+        };
+    </script>
+</body>
+</html>
