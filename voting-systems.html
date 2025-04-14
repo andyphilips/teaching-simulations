@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voting Systems Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .panel {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        select, input {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .results {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .result-card {
+            flex: 1;
+            min-width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: white;
+        }
+        .party {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .party-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .district {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        canvas {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 8px 8px 0 0;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            color: black;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            animation: fadeEffect 1s;
+        }
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Voting Systems Simulation</h1>
+        
+        <div class="panel">
+            <h2>Introduction</h2>
+            <p>This simulation demonstrates how different voting systems affect election outcomes, including the number of political parties and voter behavior. You can experiment with various parameters to see their impact on representation.</p>
+        </div>
+
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'Simulation')">Interactive Simulation</button>
+            <button class="tablinks" onclick="openTab(event, 'Theory')">Electoral Systems Theory</button>
+            <button class="tablinks" onclick="openTab(event, 'Comparison')">Systems Comparison</button>
+        </div>
+
+        <div id="Simulation" class="tabcontent" style="display: block;">
+            <div class="panel">
+                <h2>Simulation Controls</h2>
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="voting-system">Voting System:</label>
+                        <select id="voting-system" onchange="updateSimulationDescription()">
+                            <option value="fptp">Majoritarian (First-Past-The-Post)</option>
+                            <option value="pr">Proportional Representation</option>
+                            <option value="mixed">Mixed-Member Proportional</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="num-parties">Number of Parties:</label>
+                        <input type="number" id="num-parties" min="2" max="10" value="4" onchange="updatePartyControls()">
+                    </div>
+                    <div class="control-group">
+                        <label for="num-districts">Number of Districts:</label>
+                        <input type="number" id="num-districts" min="1" max="20" value="5" onchange="updateDistrictDisplay()">
+                    </div>
+                    <div class="control-group">
+                        <label for="voter-behavior">Voter Behavior:</label>
+                        <select id="voter-behavior">
+                            <option value="rational">Rational (Vote for preferred)</option>
+                            <option value="strategic">Strategic (Consider viability)</option>
+                            <option value="regional">Regional Identity</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="polarization">Ideological Polarization:</label>
+                        <input type="range" id="polarization" min="0" max="100" value="50">
+                    </div>
+                    <button onclick="runSimulation()">Run Simulation</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Current System: <span id="system-name">Majoritarian (First-Past-The-Post)</span></h2>
+                <p id="system-description">In this system, each district elects one representative. The candidate with the most votes in each district wins, even if they don't have a majority. This tends to favor two-party systems (Duverger's Law).</p>
+            </div>
+
+            <div class="panel">
+                <h2>Parties</h2>
+                <div id="party-controls" class="grid"></div>
+            </div>
+
+            <div class="panel">
+                <h2>Districts</h2>
+                <div id="districts-display"></div>
+            </div>
+
+            <div class="panel">
+                <h2>Simulation Results</h2>
+                <div class="results">
+                    <div class="result-card">
+                        <h3>Election Results</h3>
+                        <canvas id="results-chart" width="400" height="250"></canvas>
+                        <div id="seat-allocation"></div>
+                    </div>
+                    <div class="result-card">
+                        <h3>System Effects</h3>
+                        <div id="system-effects"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="Theory" class="tabcontent">
+            <div class="panel">
+                <h2>Electoral Systems Theory</h2>
+                <h3>Majoritarian Systems (e.g., First-Past-The-Post)</h3>
+                <p>Majoritarian systems typically award seats to the candidate who receives the most votes in each district. The most common form is First-Past-The-Post (FPTP).</p>
+                <p><strong>Key characteristics:</strong></p>
+                <ul>
+                    <li>Tends to produce two-party systems (Duverger's Law)</li>
+                    <li>Creates a "winner-takes-all" dynamic</li>
+                    <li>May lead to strategic voting</li>
+                    <li>Often produces single-party majority governments</li>
+                    <li>Can lead to significant disproportionality between votes and seats</li>
+                </ul>
+                
+                <h3>Proportional Representation (PR)</h3>
+                <p>Proportional systems aim to allocate seats in proportion to the votes each party receives.</p>
+                <p><strong>Key characteristics:</strong></p>
+                <ul>
+                    <li>Tends to produce multi-party systems</li>
+                    <li>Often leads to coalition governments</li>
+                    <li>Encourages sincere voting</li>
+                    <li>Usually requires electoral thresholds to prevent extreme fragmentation</li>
+                    <li>Greater proportionality between votes and seats</li>
+                </ul>
+                
+                <h3>Mixed Systems</h3>
+                <p>Mixed systems combine elements of both majoritarian and proportional systems.</p>
+                <p><strong>Key characteristics:</strong></p>
+                <ul>
+                    <li>Attempts to balance local representation with proportionality</li>
+                    <li>Can create two classes of representatives</li>
+                    <li>May produce moderate multi-party systems</li>
+                    <li>Often includes compensatory mechanisms to increase proportionality</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="Comparison" class="tabcontent">
+            <div class="panel">
+                <h2>Systems Comparison</h2>
+                <table>
+                    <tr>
+                        <th>Characteristic</th>
+                        <th>Majoritarian (FPTP)</th>
+                        <th>Proportional (PR)</th>
+                        <th>Mixed-Member Proportional</th>
+                    </tr>
+                    <tr>
+                        <td>Party System</td>
+                        <td>Usually two dominant parties</td>
+                        <td>Multiple viable parties</td>
+                        <td>Multiple parties with some concentration</td>
+                    </tr>
+                    <tr>
+                        <td>Government Formation</td>
+                        <td>Often single-party majority</td>
+                        <td>Usually coalition governments</td>
+                        <td>Often coalition governments</td>
+                    </tr>
+                    <tr>
+                        <td>Voter Behavior</td>
+                        <td>Strategic voting common</td>
+                        <td>Sincere voting encouraged</td>
+                        <td>Mix of strategic and sincere</td>
+                    </tr>
+                    <tr>
+                        <td>Representation</td>
+                        <td>Geographic representation emphasized</td>
+                        <td>Ideological representation emphasized</td>
+                        <td>Attempts to balance both forms</td>
+                    </tr>
+                    <tr>
+                        <td>Election Campaigns</td>
+                        <td>Focused on swing districts</td>
+                        <td>National campaigns important</td>
+                        <td>Both district and national campaigns</td>
+                    </tr>
+                    <tr>
+                        <td>Proportionality</td>
+                        <td>Low (often distorts vote-seat ratio)</td>
+                        <td>High (seats closely match vote share)</td>
+                        <td>Medium-high (compensatory mechanisms)</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let parties = [];
+        let districts = [];
+        let resultsChart = null;
+        
+        // Initialize the simulation
+        window.onload = function() {
+            updatePartyControls();
+            updateDistrictDisplay();
+            updateSimulationDescription();
+        };
+
+        // Tab functionality
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // Update system description based on selected voting system
+        function updateSimulationDescription() {
+            const system = document.getElementById("voting-system").value;
+            const systemName = document.getElementById("system-name");
+            const systemDescription = document.getElementById("system-description");
+            
+            switch(system) {
+                case "fptp":
+                    systemName.textContent = "Majoritarian (First-Past-The-Post)";
+                    systemDescription.textContent = "In this system, each district elects one representative. The candidate with the most votes in each district wins, even if they don't have a majority. This tends to favor two-party systems (Duverger's Law).";
+                    break;
+                case "pr":
+                    systemName.textContent = "Proportional Representation";
+                    systemDescription.textContent = "In this system, parties receive seats in proportion to their overall vote share. This allows smaller parties to gain representation and encourages a multi-party system.";
+                    break;
+                case "mixed":
+                    systemName.textContent = "Mixed-Member Proportional";
+                    systemDescription.textContent = "This hybrid system elects some representatives from districts (like FPTP) and others from party lists to ensure overall proportionality. It attempts to combine local representation with proportional outcomes.";
+                    break;
+            }
+        }
+
+        // Generate random color for parties
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // Update party controls based on number of parties
+        function updatePartyControls() {
+            const numParties = parseInt(document.getElementById("num-parties").value);
+            const partyControls = document.getElementById("party-controls");
+            partyControls.innerHTML = "";
+            
+            // Create default parties if they don't exist
+            if (parties.length === 0) {
+                parties = [
+                    { name: "Liberal Party", color: "#FF0000", ideology: 25, regionality: 20 },
+                    { name: "Conservative Party", color: "#0000FF", ideology: 75, regionality: 20 },
+                    { name: "Green Party", color: "#00CC00", ideology: 10, regionality: 50 },
+                    { name: "Nationalist Party", color: "#FFCC00", ideology: 60, regionality: 80 }
+                ];
+            }
+            
+            // Ensure we have enough parties
+            while (parties.length < numParties) {
+                parties.push({
+                    name: `Party ${parties.length + 1}`,
+                    color: getRandomColor(),
+                    ideology: Math.floor(Math.random() * 100),
+                    regionality: Math.floor(Math.random() * 100)
+                });
+            }
+            
+            // Create party controls for visible parties
+            for (let i = 0; i < numParties; i++) {
+                const party = parties[i];
+                const partyDiv = document.createElement("div");
+                partyDiv.className = "party-control";
+                partyDiv.innerHTML = `
+                    <div class="party">
+                        <div class="party-color" style="background-color: ${party.color}"></div>
+                        <input type="text" value="${party.name}" onchange="parties[${i}].name = this.value" style="width: 150px;">
+                        <input type="color" value="${party.color}" onchange="parties[${i}].color = this.value; document.querySelectorAll('.party-color')[${i}].style.backgroundColor = this.value;">
+                    </div>
+                    <div>
+                        <label class="tooltip">Ideology (Left-Right):
+                            <span class="tooltiptext">Where the party falls on the left-right political spectrum (0 = far left, 100 = far right)</span>
+                        </label>
+                        <input type="range" min="0" max="100" value="${party.ideology}" onchange="parties[${i}].ideology = parseInt(this.value)">
+                        <span>${party.ideology}</span>
+                    </div>
+                    <div>
+                        <label class="tooltip">Regional Appeal:
+                            <span class="tooltiptext">How concentrated the party's support is in specific regions (0 = broad appeal, 100 = highly regional)</span>
+                        </label>
+                        <input type="range" min="0" max="100" value="${party.regionality}" onchange="parties[${i}].regionality = parseInt(this.value)">
+                        <span>${party.regionality}</span>
+                    </div>
+                `;
+                partyControls.appendChild(partyDiv);
+            }
+        }
+
+        // Update district display
+        function updateDistrictDisplay() {
+            const numDistricts = parseInt(document.getElementById("num-districts").value);
+            const districtsDisplay = document.getElementById("districts-display");
+            districtsDisplay.innerHTML = "";
+            
+            // Initialize districts if they don't exist
+            if (districts.length === 0) {
+                districts = [];
+                for (let i = 0; i < numDistricts; i++) {
+                    districts.push({
+                        name: `District ${i + 1}`,
+                        size: Math.floor(Math.random() * 50) + 50, // 50-100 thousand voters
+                        leaning: Math.floor(Math.random() * 100) // Ideological leaning 0-100
+                    });
+                }
+            }
+            
+            // Ensure we have enough districts
+            while (districts.length < numDistricts) {
+                districts.push({
+                    name: `District ${districts.length + 1}`,
+                    size: Math.floor(Math.random() * 50) + 50,
+                    leaning: Math.floor(Math.random() * 100)
+                });
+            }
+            
+            // Create district displays
+            for (let i = 0; i < numDistricts; i++) {
+                const district = districts[i];
+                const districtDiv = document.createElement("div");
+                districtDiv.className = "district";
+                districtDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <input type="text" value="${district.name}" onchange="districts[${i}].name = this.value" style="width: 150px;">
+                        <div>
+                            <label>Population: </label>
+                            <input type="number" min="10" max="200" value="${district.size}" onchange="districts[${i}].size = parseInt(this.value)" style="width: 70px;"> thousand
+                        </div>
+                    </div>
+                    <div>
+                        <label class="tooltip">Ideological Leaning:
+                            <span class="tooltiptext">The general political leaning of this district (0 = far left, 100 = far right)</span>
+                        </label>
+                        <input type="range" min="0" max="100" value="${district.leaning}" onchange="districts[${i}].leaning = parseInt(this.value)">
+                        <span>${district.leaning < 40 ? 'Left-leaning' : district.leaning > 60 ? 'Right-leaning' : 'Centrist'}</span>
+                    </div>
+                `;
+                districtsDisplay.appendChild(districtDiv);
+            }
+        }
+
+        // Run the election simulation
+        function runSimulation() {
+            const votingSystem = document.getElementById("voting-system").value;
+            const voterBehavior = document.getElementById("voter-behavior").value;
+            const polarization = parseInt(document.getElementById("polarization").value);
+            const numParties = parseInt(document.getElementById("num-parties").value);
+            const numDistricts = parseInt(document.getElementById("num-districts").value);
+            
+            // Reset districts to visible ones
+            districts = districts.slice(0, numDistricts);
+            // Reset parties to visible ones
+            parties = parties.slice(0, numParties);
+            
+            // Simulate election based on selected parameters
+            const results = simulateElection(votingSystem, voterBehavior, polarization);
+            
+            // Display results
+            displayResults(results, votingSystem);
+            
+            // Display system effects
+            displaySystemEffects(results, votingSystem, voterBehavior);
+        }
+
+        // Simulate an election based on parameters
+        function simulateElection(votingSystem, voterBehavior, polarization) {
+            const results = {
+                overallVotes: {},
+                districtResults: [],
+                seatAllocation: {},
+                effectiveNumberOfParties: 0,
+                disproportionalityIndex: 0,
+                wasted_votes: 0
+            };
+            
+            // Initialize results
+            parties.forEach(party => {
+                results.overallVotes[party.name] = 0;
+                results.seatAllocation[party.name] = 0;
+            });
+            
+            // Simulate voting in each district
+            districts.forEach(district => {
+                const districtResult = {
+                    name: district.name,
+                    votes: {},
+                    winner: null,
+                    turnout: 0
+                };
+                
+                let totalVotes = 0;
+                
+                // Calculate raw vote share for each party in this district
+                parties.forEach(party => {
+                    // Base support based on ideological proximity
+                    let support = 100 - Math.abs(district.leaning - party.ideology);
+                    
+                    // Regional factor
+                    if (party.regionality > 50) {
+                        // Highly regional parties have concentrated support
+                        const regionalFit = Math.random() * 100;
+                        if (regionalFit < party.regionality) {
+                            support *= 1.5; // Strong support in some regions
+                        } else {
+                            support *= 0.5; // Weak support elsewhere
+                        }
+                    }
+                    
+                    // Polarization effect
+                    if (polarization > 50) {
+                        // Higher polarization amplifies ideological alignment
+                        const alignment = 100 - Math.abs(district.leaning - party.ideology);
+                        support = support * (1 + (alignment / 100) * ((polarization - 50) / 50));
+                    } else if (polarization < 50) {
+                        // Lower polarization reduces ideological differences
+                        support = support * (0.75 + 0.5 * (polarization / 50));
+                    }
+                    
+                    // Strategic voting effect
+                    if (voterBehavior === "strategic" && votingSystem === "fptp") {
+                        // In FPTP with strategic voting, support concentrates on viable candidates
+                        if (support < 30) {
+                            support *= 0.5; // Voters abandon clearly non-viable parties
+                        }
+                    }
+                    
+                    // Add some randomness
+                    support *= 0.8 + (Math.random() * 0.4);
+                    
+                    districtResult.votes[party.name] = Math.floor(support * district.size * 100); // Convert to actual votes
+                    totalVotes += districtResult.votes[party.name];
+                });
+                
+                // Record turnout
+                districtResult.turnout = (totalVotes / (district.size * 1000)) * 100;
+                
+                // Determine district winner for FPTP and mixed systems
+                if (votingSystem === "fptp" || votingSystem === "mixed") {
+                    let maxVotes = 0;
+                    parties.forEach(party => {
+                        if (districtResult.votes[party.name] > maxVotes) {
+                            maxVotes = districtResult.votes[party.name];
+                            districtResult.winner = party.name;
+                        }
+                    });
+                    
+                    // Award seat to winner under FPTP
+                    if (votingSystem === "fptp") {
+                        results.seatAllocation[districtResult.winner]++;
+                    }
+                }
+                
+                // Add district results to overall votes
+                parties.forEach(party => {
+                    results.overallVotes[party.name] += districtResult.votes[party.name];
+                });
+                
+                results.districtResults.push(districtResult);
+            });
+            
+            // Calculate seat allocation for PR and mixed systems
+            if (votingSystem === "pr" || votingSystem === "mixed") {
+                const totalSeats = votingSystem === "pr" ? districts.length : Math.floor(districts.length / 2);
+                const dhondtQuotients = {};
+                const totalVotes = Object.values(results.overallVotes).reduce((sum, votes) => sum + votes, 0);
+                
+                // In mixed system, half the seats are already allocated by FPTP
+                if (votingSystem === "mixed") {
+                    results.districtResults.forEach(district => {
+                        results.seatAllocation[district.winner]++;
+                    });
+                }
+                
+                // PR component uses D'Hondt method to distribute seats
+                parties.forEach(party => {
+                    dhondtQuotients[party.name] = [];
+                    for (let i = 1; i <= totalSeats; i++) {
+                        dhondtQuotients[party.name].push(results.overallVotes[party.name] / i);
+                    }
+                });
+                
+                // Allocate PR seats
+                for (let i = 0; i < totalSeats; i++) {
+                    let maxQuotient = 0;
+                    let maxParty = null;
+                    
+                    parties.forEach(party => {
+                        if (dhondtQuotients[party.name][0] > maxQuotient) {
+                            maxQuotient = dhondtQuotients[party.name][0];
+                            maxParty = party.name;
+                        }
+                    });
+                    
+                    // Award seat and update quotients
+                    if (maxParty) {
+                        if (votingSystem === "pr") {
+                            results.seatAllocation[maxParty]++;
+                        } else if (votingSystem === "mixed") {
+                            // For mixed system, these are compensatory seats to ensure proportionality
+                            results.seatAllocation[maxParty] = Math.max(
+                                results.seatAllocation[maxParty],
+                                Math.round((results.overallVotes[maxParty] / totalVotes) * districts.length)
+                            );
+                        }
+                        dhondtQuotients[maxParty].shift();
+                    }
+                }
+            }
+            
+            // Calculate effective number of parties (by votes)
+            const totalVotes = Object.values(results.overallVotes).reduce((sum, votes) => sum + votes, 0);
+            let sumSquaredVoteShares = 0;
+            parties.forEach(party => {
+                const voteShare = results.overallVotes[party.name] / totalVotes;
+                sumSquaredVoteShares += voteShare * voteShare;
+            });
+            results.effectiveNumberOfParties = 1 / sumSquaredVoteShares;
+            
+            // Calculate disproportionality index (Gallagher index)
+            const totalSeats = districts.length;
+            let sumSquaredDifferences = 0;
+            parties.forEach(party => {
+                const voteShare = results.overallVotes[party.name] / totalVotes;
+                const seatShare = results.seatAllocation[party.name] / totalSeats;
+                sumSquaredDifferences += Math.pow(voteShare - seatShare, 2);
+            });
+            results.disproportionalityIndex = Math.sqrt(sumSquaredDifferences / 2);
+            
+            // Calculate wasted votes (votes that didn't contribute to seat winning)
+            if (votingSystem === "fptp") {
+                results.districtResults.forEach(district => {
+                    parties.forEach(party => {
+                        if (party.name !== district.winner) {
+                            results.wasted_votes += district.votes[party.name];
+                        } else {
+                            // Surplus votes for winner also "wasted"
+                            const runnerUpVotes = Math.max(...Object.entries(district.votes)
+                                .filter(([name]) => name !== district.winner)
+                                .map(([, votes]) => votes));
+                            results.wasted_votes += district.votes[party.name] - runnerUpVotes - 1;
+                        }
+                    });
+                });
+            }
+            
+            return results;
+        }
+
+        // Display election results
+        function displayResults(results, votingSystem) {
+            const seatAllocationDiv = document.getElementById("seat-allocation");
+            
+            // Display seat allocation table
+            let seatTable = `<h4>Seat Allocation</h4>
+                <table>
+                    <tr>
+                        <th>Party</th>
+                        <th>Votes</th>
+                        <th>Vote %</th>
+                        <th>Seats</th>
+                        <th>Seat %</th>
+                    </tr>`;
+            
+            const totalVotes = Object.values(results.overallVotes).reduce((sum, votes) => sum + votes, 0);
+            const totalSeats = districts.length;
+            
+            parties.forEach(party => {
+                const voteShare = (results.overallVotes[party.name] / totalVotes * 100).toFixed(1);
+                const seatShare = (results.seatAllocation[party.name] / totalSeats * 100).toFixed(1);
+                
+                seatTable += `<tr>
+                    <td><div class="party">
+                        <div class="party-color" style="background-color: ${party.color}"></div>
+                        ${party.name}
+                    </div></td>
+                    <td>${results.overallVotes[party.name].toLocaleString()}</td>
+                    <td>${voteShare}%</td>
+                    <td>${results.seatAllocation[party.name]}</td>
+                    <td>${seatShare}%</td>
+                </tr>`;
+            });
+            
+            seatTable += `</table>`;
+            seatAllocationDiv.innerHTML = seatTable;
+            
+            // Create/update chart
+            const ctx = document.getElementById('results-chart').getContext('2d');
+            if (resultsChart) {
+                resultsChart.destroy();
+            }
+            
+            const labels = parties.map(party => party.name);
+            const voteData = parties.map(party => results.overallVotes[party.name]);
+            const seatData = parties.map(party => results.seatAllocation[party.name]);
+            const backgroundColors = parties.map(party => party.color);
+            
+            resultsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Votes',
+                            data: voteData,
+                            backgroundColor: backgroundColors.map(color => color + '80'), // Add transparency
+                            borderColor: backgroundColors,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Seats',
+                            data: seatData,
+                            backgroundColor: backgroundColors,
+                            borderColor: backgroundColors.map(color => '#000000'),
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Display system effects
+        function displaySystemEffects(results, votingSystem, voterBehavior) {
+            const systemEffectsDiv = document.getElementById("system-effects");
+            
+            const totalVotes = Object.values(results.overallVotes).reduce((sum, votes) => sum + votes, 0);
+            const totalSeats = districts.length;
+            const wastedVotesPct = (results.wasted_votes / totalVotes * 100).toFixed(1);
+            
+            // Determine government type
+            let governmentType = "Coalition government likely";
+            const largestParty = Object.entries(results.seatAllocation)
+                .sort((a, b) => b[1] - a[1])[0];
+            
+            if (largestParty[1] > totalSeats / 2) {
+                governmentType = `Single-party majority (${largestParty[0]})`;
+            }
+            
+            // Determine representation fairness
+            let representationFairness = "Moderate";
+            if (results.disproportionalityIndex < 5) {
+                representationFairness = "High";
+            } else if (results.disproportionalityIndex > 10) {
+                representationFairness = "Low";
+            }
+            
+            // Generate analysis
+            let analysis = `
+                <table>
+                    <tr>
+                        <td><strong>Effective Number of Parties:</strong></td>
+                        <td>${results.effectiveNumberOfParties.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Disproportionality Index:</strong></td>
+                        <td>${results.disproportionalityIndex.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Government Type:</strong></td>
+                        <td>${governmentType}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Representation Fairness:</strong></td>
+                        <td>${representationFairness}</td>
+                    </tr>`;
+                    
+            if (votingSystem === "fptp") {
+                analysis += `
+                    <tr>
+                        <td><strong>Wasted Votes:</strong></td>
+                        <td>${results.wasted_votes.toLocaleString()} (${wastedVotesPct}%)</td>
+                    </tr>`;
+            }
+            
+            analysis += `</table>
+                <h4>System Analysis</h4>
+                <p>`;
+            
+            // Add system-specific analysis
+            switch(votingSystem) {
+                case "fptp":
+                    analysis += `The majoritarian system has produced `;
+                    if (results.effectiveNumberOfParties < 2.5) {
+                        analysis += `a typical two-party dominant result, in line with Duverger's Law. `;
+                    } else {
+                        analysis += `a more fragmented result than typically expected under Duverger's Law. `;
+                    }
+                    
+                    analysis += `The disproportionality index of ${results.disproportionalityIndex.toFixed(2)} indicates `;
+                    if (results.disproportionalityIndex > 10) {
+                        analysis += `a significant disparity between votes and seats, which is common in FPTP systems.`;
+                    } else {
+                        analysis += `a relatively proportional outcome for a FPTP system, which is less common.`;
+                    }
+                    
+                    break;
+                case "pr":
+                    analysis += `The proportional system has produced a result with ${results.effectiveNumberOfParties.toFixed(2)} effective parties, `;
+                    if (results.effectiveNumberOfParties > 3.5) {
+                        analysis += `showing the fragmentation that PR systems typically enable. `;
+                    } else {
+                        analysis += `showing a relatively concentrated party system despite using PR. `;
+                    }
+                    
+                    analysis += `The disproportionality index of ${results.disproportionalityIndex.toFixed(2)} indicates `;
+                    if (results.disproportionalityIndex < 5) {
+                        analysis += `the high level of proportionality that is the primary feature of PR systems.`;
+                    } else {
+                        analysis += `a less proportional outcome than expected in a pure PR system.`;
+                    }
+                    
+                    break;
+                case "mixed":
+                    analysis += `The mixed system has produced ${results.effectiveNumberOfParties.toFixed(2)} effective parties, `;
+                    if (results.effectiveNumberOfParties > 2.5 && results.effectiveNumberOfParties < 4.5) {
+                        analysis += `which falls in the typical range for mixed systems - more than FPTP but often fewer than pure PR. `;
+                    } else if (results.effectiveNumberOfParties <= 2.5) {
+                        analysis += `which is lower than typically expected for mixed systems, suggesting FPTP effects are dominating. `;
+                    } else {
+                        analysis += `which is quite high for a mixed system, suggesting the PR component is having a strong effect. `;
+                    }
+                    
+                    analysis += `The disproportionality index of ${results.disproportionalityIndex.toFixed(2)} indicates `;
+                    if (results.disproportionalityIndex < 7) {
+                        analysis += `the mixed system is achieving its goal of greater proportionality than FPTP.`;
+                    } else {
+                        analysis += `the mixed system is still producing significant disproportionality despite its PR component.`;
+                    }
+                    
+                    break;
+            }
+            
+            // Add voter behavior analysis
+            analysis += `</p><p>`;
+            switch(voterBehavior) {
+                case "rational":
+                    analysis += `With rational voting behavior, voters are supporting their genuinely preferred parties regardless of strategic considerations.`;
+                    break;
+                case "strategic":
+                    analysis += `Strategic voting behavior appears to have `;
+                    if (votingSystem === "fptp" && results.effectiveNumberOfParties < 2.5) {
+                        analysis += `reinforced the two-party dynamic typical of FPTP systems.`;
+                    } else if (votingSystem === "fptp") {
+                        analysis += `not fully concentrated votes on two major parties as Duverger's Law would predict.`;
+                    } else {
+                        analysis += `had less impact than in FPTP systems, as PR and mixed systems reduce incentives for strategic voting.`;
+                    }
+                    break;
+                case "regional":
+                    analysis += `Regional voting patterns have `;
+                    if (results.effectiveNumberOfParties > 3.0) {
+                        analysis += `helped sustain more parties than national voting patterns typically would.`;
+                    } else {
+                        analysis += `not prevented consolidation into a relatively concentrated party system.`;
+                    }
+                    break;
+            }
+            
+            analysis += `</p>`;
+            systemEffectsDiv.innerHTML = analysis;
+        }
+    </script>
+
+    <!-- Add Chart.js for data visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+</body>
+</html>

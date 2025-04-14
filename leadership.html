@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wartime Leadership Simulation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        
+        .scenario-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .option-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #e0e0e0;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        
+        .option-btn:hover {
+            background-color: #d0d0d0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f0f7ff;
+            border-radius: 8px;
+            border-left: 5px solid #2980b9;
+            display: none;
+        }
+        
+        .historical-context {
+            font-style: italic;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .trait-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .trait-badge {
+            background-color: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+        }
+        
+        .feedback-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4f8;
+            border-radius: 8px;
+        }
+        
+        .progress-container {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f0f0f0;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: #3498db;
+            width: 0;
+            transition: width 0.5s;
+        }
+        
+        .decision-log {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #3498db;
+            background-color: white;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .reflection-prompt {
+            background-color: #ffe9c5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 5px solid #f39c12;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Wartime Leadership Simulation</h1>
+        
+        <div id="intro">
+            <p>This simulation places you in the role of a historical leader during a critical wartime period. Your decisions will be influenced by your assigned psychological traits and will have significant consequences on the outcome of the conflict.</p>
+            
+            <p>Your objective is to navigate complex scenarios while being mindful of how your personal traits affect your decision-making process.</p>
+
+            <h3>Instructions:</h3>
+            <ol>
+                <li>You'll be assigned a historical leader with unique psychological traits</li>
+                <li>You'll face a series of wartime scenarios requiring critical decisions</li>
+                <li>Each decision will affect your military strength, diplomatic relations, and civilian support</li>
+                <li>After each decision, you'll receive feedback on how your traits influenced your choices</li>
+                <li>At the end, you'll reflect on how psychological biases shaped your leadership approach</li>
+            </ol>
+            
+            <button id="start-btn" class="btn btn-primary">Begin Simulation</button>
+        </div>
+        
+        <div id="simulation" class="hidden">
+            <div id="leader-profile">
+                <h2>Your Historical Identity</h2>
+                <div id="leader-name"></div>
+                <div id="historical-context" class="historical-context"></div>
+                <h3>Your Psychological Profile:</h3>
+                <div id="trait-container" class="trait-container"></div>
+            </div>
+            
+            <div class="progress-container">
+                <h3>Status Indicators</h3>
+                <div>
+                    <p>Military Strength: <span id="military-score">70</span>/100</p>
+                    <div class="progress-bar">
+                        <div id="military-progress" class="progress" style="width: 70%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <p>Diplomatic Relations: <span id="diplomatic-score">70</span>/100</p>
+                    <div class="progress-bar">
+                        <div id="diplomatic-progress" class="progress" style="width: 70%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <p>Civilian Support: <span id="civilian-score">70</span>/100</p>
+                    <div class="progress-bar">
+                        <div id="civilian-progress" class="progress" style="width: 70%;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="scenario-container" class="scenario-container">
+                <h2 id="scenario-title">Scenario</h2>
+                <div id="scenario-description"></div>
+                
+                <div id="options-container" class="options-container"></div>
+            </div>
+            
+            <div id="result-container" class="result-container">
+                <h3>Outcome</h3>
+                <div id="result-description"></div>
+                
+                <div id="feedback-container" class="feedback-container">
+                    <h3>Psychological Analysis</h3>
+                    <div id="feedback-text"></div>
+                </div>
+                
+                <button id="next-btn" class="btn btn-primary">Next Scenario</button>
+            </div>
+            
+            <div id="decision-log" class="decision-log">
+                <h3>Decision Log</h3>
+                <div id="log-entries"></div>
+            </div>
+            
+            <div class="controls">
+                <button id="restart-btn" class="btn btn-secondary">Restart Simulation</button>
+            </div>
+        </div>
+        
+        <div id="reflection" class="hidden">
+            <h2>Simulation Complete - Reflection</h2>
+            <div id="outcome-summary"></div>
+            
+            <div class="reflection-prompt">
+                <h3>Reflection Questions:</h3>
+                <ol>
+                    <li>How did your assigned psychological traits influence your decision-making process?</li>
+                    <li>Did you notice any cognitive biases affecting your choices?</li>
+                    <li>How might different psychological traits have led to alternative outcomes?</li>
+                    <li>What historical parallels can you draw between your simulation experience and actual wartime leadership?</li>
+                </ol>
+            </div>
+            
+            <div class="controls">
+                <button id="final-restart-btn" class="btn btn-secondary">Restart Simulation</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Psychological Traits
+        const psychTraits = [
+            { name: "Risk-Seeking", description: "Tendency to take risks for potential gains" },
+            { name: "Risk-Averse", description: "Preference for safer options with more certain outcomes" },
+            { name: "Need for Approval", description: "Strong desire for acceptance and affirmation from others" },
+            { name: "Authoritarian", description: "Preference for strict obedience to authority" },
+            { name: "Empathetic", description: "Strong ability to understand others' feelings" },
+            { name: "Pragmatic", description: "Focus on practical considerations rather than ideals" },
+            { name: "Idealistic", description: "Strong commitment to ideals and principles" },
+            { name: "Decisive", description: "Quick and firm in making decisions" },
+            { name: "Deliberative", description: "Careful and thorough consideration before action" },
+            { name: "Impulsive", description: "Acting on immediate inclinations without consideration" },
+            { name: "Machiavellian", description: "Willing to manipulate others for strategic advantage" },
+            { name: "Fatalistic", description: "Belief that events are predetermined and inevitable" }
+        ];
+        
+        // Historical Leaders
+        const leaders = [
+            {
+                name: "Winston Churchill (1940-1945)",
+                context: "As Prime Minister of the United Kingdom during World War II, you face the challenge of defending Britain against Nazi Germany while maintaining alliances.",
+                recommendedTraits: ["Decisive", "Risk-Seeking", "Need for Approval"],
+                contradictoryTraits: ["Risk-Averse", "Fatalistic"]
+            },
+            {
+                name: "Franklin D. Roosevelt (1941-1945)",
+                context: "As President of the United States during World War II, you must balance domestic concerns with global responsibilities after Pearl Harbor.",
+                recommendedTraits: ["Pragmatic", "Deliberative", "Empathetic"],
+                contradictoryTraits: ["Impulsive", "Authoritarian"]
+            },
+            {
+                name: "Emperor Hirohito (1941-1945)",
+                context: "As Emperor of Japan during World War II, you must navigate the growing military influence within your government while preserving imperial authority.",
+                recommendedTraits: ["Deliberative", "Pragmatic", "Risk-Averse"],
+                contradictoryTraits: ["Impulsive", "Decisive"]
+            },
+            {
+                name: "Abraham Lincoln (1861-1865)",
+                context: "As President of the United States during the Civil War, you struggle to preserve the Union while addressing the moral issue of slavery.",
+                recommendedTraits: ["Deliberative", "Empathetic", "Idealistic"],
+                contradictoryTraits: ["Machiavellian", "Impulsive"]
+            },
+            {
+                name: "Catherine the Great (Russo-Turkish Wars)",
+                context: "As Empress of Russia during its expansion period, you must balance military campaigns with domestic reforms and diplomatic relationships.",
+                recommendedTraits: ["Pragmatic", "Decisive", "Machiavellian"],
+                contradictoryTraits: ["Fatalistic", "Need for Approval"]
+            }
+        ];
+        
+        // Scenarios
+        const scenarios = [
+            {
+                title: "Intelligence Dilemma",
+                description: "Your intelligence services have intercepted information about an imminent enemy attack on a civilian target. However, acting on this intelligence would reveal your code-breaking capabilities, potentially compromising future intelligence gathering.",
+                options: [
+                    {
+                        text: "Evacuate the civilian target secretly, creating a cover story for the evacuation",
+                        militaryEffect: -5,
+                        diplomaticEffect: 0,
+                        civilianEffect: 10,
+                        favorableTraits: ["Empathetic", "Pragmatic"],
+                        unfavorableTraits: ["Risk-Seeking", "Decisive"],
+                        feedback: "Your empathetic concern for civilian lives led you to prioritize immediate safety. A pragmatic leader often seeks balanced solutions that protect both current and future interests. However, this more deliberative approach might frustrate those with more decisive or risk-taking tendencies who might prefer clearer, more definitive action."
+                    },
+                    {
+                        text: "Take no direct action, but strengthen defenses in the area without revealing your knowledge",
+                        militaryEffect: 5,
+                        diplomaticEffect: 0,
+                        civilianEffect: -15,
+                        favorableTraits: ["Pragmatic", "Risk-Averse", "Machiavellian"],
+                        unfavorableTraits: ["Empathetic", "Idealistic"],
+                        feedback: "This strategic decision prioritizes long-term intelligence capabilities over immediate civilian safety, demonstrating pragmatic calculation of relative costs. Leaders with Machiavellian tendencies often make these utilitarian trade-offs, while those with stronger empathetic or idealistic traits might struggle with the moral weight of potential civilian casualties."
+                    },
+                    {
+                        text: "Launch a preemptive strike against the enemy forces preparing the attack",
+                        militaryEffect: 10,
+                        diplomaticEffect: -10,
+                        civilianEffect: 5,
+                        favorableTraits: ["Decisive", "Risk-Seeking", "Authoritarian"],
+                        unfavorableTraits: ["Deliberative", "Risk-Averse"],
+                        feedback: "Your decisive, proactive approach reflects a willingness to take bold military action rather than waiting defensively. This approach aligns with risk-seeking and authoritarian leadership styles that value clear, forceful responses to threats. More deliberative or risk-averse leaders might have preferred options with more predictable diplomatic consequences."
+                    },
+                    {
+                        text: "Share the intelligence with allies, creating a united diplomatic response condemning the planned attack",
+                        militaryEffect: 0,
+                        diplomaticEffect: 15,
+                        civilianEffect: -5,
+                        favorableTraits: ["Idealistic", "Need for Approval", "Deliberative"],
+                        unfavorableTraits: ["Authoritarian", "Machiavellian"],
+                        feedback: "Your choice reflects an idealistic belief in collaborative solutions and multilateral approaches. Leaders with a need for approval often seek consensus-based decisions that strengthen alliances. More authoritarian or strategically manipulative leaders might view this sharing of sensitive intelligence as unnecessarily compromising your nation's informational advantage."
+                    }
+                ]
+            },
+            {
+                title: "Resource Allocation Crisis",
+                description: "Your nation faces critical shortages of essential supplies. Military commanders are requesting more resources for the front lines, while civilian authorities warn of growing unrest due to rationing at home.",
+                options: [
+                    {
+                        text: "Prioritize civilian needs to maintain domestic stability and production capacity",
+                        militaryEffect: -10,
+                        diplomaticEffect: 0,
+                        civilianEffect: 15,
+                        favorableTraits: ["Empathetic", "Need for Approval", "Risk-Averse"],
+                        unfavorableTraits: ["Authoritarian", "Decisive"],
+                        feedback: "Your decision prioritizes civilian wellbeing, reflecting empathetic concern for your population's suffering. Leaders who seek public approval often make choices that alleviate immediate domestic pressures. More authoritarian or military-focused leaders might view this as compromising strategic capabilities at a critical moment."
+                    },
+                    {
+                        text: "Prioritize military needs to secure quick victory and end the war sooner",
+                        militaryEffect: 15,
+                        diplomaticEffect: 5,
+                        civilianEffect: -15,
+                        favorableTraits: ["Decisive", "Pragmatic", "Authoritarian"],
+                        unfavorableTraits: ["Empathetic", "Need for Approval"],
+                        feedback: "This decision reflects a strategic calculation that military victory is the fastest path to resolving all resource issues. Decisive, pragmatic leaders often focus on the primary objective (winning the war) at the expense of secondary concerns. This approach can appear callous to those with stronger empathetic tendencies who might focus more on immediate civilian suffering."
+                    },
+                    {
+                        text: "Seek emergency aid from allies, accepting diplomatic conditions in exchange",
+                        militaryEffect: 5,
+                        diplomaticEffect: -5,
+                        civilianEffect: 10,
+                        favorableTraits: ["Pragmatic", "Deliberative", "Need for Approval"],
+                        unfavorableTraits: ["Authoritarian", "Idealistic"],
+                        feedback: "Your choice demonstrates pragmatic problem-solving and a deliberative approach that seeks external solutions rather than forcing internal trade-offs. Leaders who value diplomatic relationships often accept compromises in sovereignty for practical benefits. More authoritarian or strongly independent leaders might resist solutions that create dependency on allies."
+                    },
+                    {
+                        text: "Implement extreme rationing measures with harsh penalties for violations",
+                        militaryEffect: 10,
+                        diplomaticEffect: -5,
+                        civilianEffect: -5,
+                        favorableTraits: ["Authoritarian", "Decisive", "Machiavellian"],
+                        unfavorableTraits: ["Empathetic", "Need for Approval"],
+                        feedback: "This authoritarian approach prioritizes control and efficiency over public sentiment. Leaders with Machiavellian tendencies often implement severe measures when they believe the ends justify the means. Those with stronger empathetic qualities or concern for public approval would likely struggle with imposing additional hardships on an already stressed population."
+                    }
+                ]
+            },
+            {
+                title: "Peace Negotiation Opportunity",
+                description: "The enemy has signaled willingness to enter peace talks. Your military position is tenuous, but improving. Accepting talks now might result in unfavorable terms, but continuing the war carries significant risks.",
+                options: [
+                    {
+                        text: "Enter peace talks immediately, seeking the best possible terms",
+                        militaryEffect: -5,
+                        diplomaticEffect: 15,
+                        civilianEffect: 10,
+                        favorableTraits: ["Risk-Averse", "Empathetic", "Pragmatic"],
+                        unfavorableTraits: ["Idealistic", "Risk-Seeking"],
+                        feedback: "Your decision reveals a risk-averse approach that values certainty over potential gains. Empathetic leaders often prioritize ending suffering, even at some cost. Those with more idealistic or risk-seeking tendencies might view this as settling for less than what could be achieved through continued struggle."
+                    },
+                    {
+                        text: "Continue fighting to improve your negotiating position before agreeing to talks",
+                        militaryEffect: 5,
+                        diplomaticEffect: -5,
+                        civilianEffect: -10,
+                        favorableTraits: ["Risk-Seeking", "Decisive", "Machiavellian"],
+                        unfavorableTraits: ["Empathetic", "Risk-Averse"],
+                        feedback: "This strategic decision shows a willingness to accept short-term costs for potentially greater long-term gains. Risk-seeking leaders often delay immediate gratification in pursuit of better outcomes. This approach can appear callous to those with stronger empathetic traits who might focus more on the immediate human cost of continued conflict."
+                    },
+                    {
+                        text: "Publicly accept the peace offer while secretly preparing for a decisive offensive",
+                        militaryEffect: 15,
+                        diplomaticEffect: -15,
+                        civilianEffect: 5,
+                        favorableTraits: ["Machiavellian", "Decisive", "Risk-Seeking"],
+                        unfavorableTraits: ["Idealistic", "Empathetic"],
+                        feedback: "Your choice reflects a Machiavellian approach that values strategic advantage over diplomatic integrity. Leaders who embrace deception as a tool often make such decisions, viewing duplicity as justified in pursuit of victory. Those with stronger idealistic or ethical frameworks might resist options that undermine trust and diplomatic norms."
+                    },
+                    {
+                        text: "Propose a temporary ceasefire to address humanitarian needs while continuing diplomatic discussions",
+                        militaryEffect: 0,
+                        diplomaticEffect: 10,
+                        civilianEffect: 15,
+                        favorableTraits: ["Deliberative", "Empathetic", "Idealistic"],
+                        unfavorableTraits: ["Decisive", "Machiavellian"],
+                        feedback: "This balanced approach shows a deliberative mind seeking a middle path that addresses humanitarian concerns while keeping options open. Leaders with strong empathetic and idealistic traits often look for solutions that minimize suffering while remaining principled. More decisive leaders might see this as unnecessarily prolonging the conflict resolution process."
+                    }
+                ]
+            },
+            {
+                title: "Allied Betrayal",
+                description: "You've discovered that one of your key allies has been conducting secret negotiations with the enemy. They haven't reached an agreement yet, but this betrayal could significantly weaken your position if they defect.",
+                options: [
+                    {
+                        text: "Confront them directly, demanding renewed commitment to your alliance",
+                        militaryEffect: 0,
+                        diplomaticEffect: -5,
+                        civilianEffect: 5,
+                        favorableTraits: ["Decisive", "Idealistic", "Authoritarian"],
+                        unfavorableTraits: ["Pragmatic", "Machiavellian"],
+                        feedback: "Your straightforward approach reflects decisive leadership that values clarity and directness. Idealistic leaders often believe in addressing breaches of trust openly. More pragmatic or strategically manipulative leaders might view this direct confrontation as potentially forcing an ally into an enemy's arms prematurely."
+                    },
+                    {
+                        text: "Quietly offer them better terms than the enemy could provide",
+                        militaryEffect: -5,
+                        diplomaticEffect: 15,
+                        civilianEffect: -5,
+                        favorableTraits: ["Pragmatic", "Machiavellian", "Deliberative"],
+                        unfavorableTraits: ["Idealistic", "Authoritarian"],
+                        feedback: "This pragmatic response acknowledges political reality without escalating tensions. Leaders with Machiavellian tendencies often prefer these subtle maneuvers to maintain relationships while addressing underlying issues. Those with stronger idealistic or principled approaches might resist rewarding disloyal behavior, seeing it as compromising moral standards."
+                    },
+                    {
+                        text: "Preemptively announce the betrayal to your other allies and the public",
+                        militaryEffect: 5,
+                        diplomaticEffect: -15,
+                        civilianEffect: 0,
+                        favorableTraits: ["Risk-Seeking", "Authoritarian", "Need for Approval"],
+                        unfavorableTraits: ["Deliberative", "Pragmatic"],
+                        feedback: "This aggressive approach reflects a willingness to take diplomatic risks for potential strategic advantage. Leaders with authoritarian tendencies might favor publicly exposing disloyalty as a warning to others. More deliberative or diplomatically minded leaders would likely consider the broader coalition consequences before taking such a potentially destabilizing action."
+                    },
+                    {
+                        text: "Secretly prepare for their defection while appearing unaware",
+                        militaryEffect: 10,
+                        diplomaticEffect: 0,
+                        civilianEffect: 0,
+                        favorableTraits: ["Pragmatic", "Deliberative", "Risk-Averse"],
+                        unfavorableTraits: ["Idealistic", "Need for Approval"],
+                        feedback: "Your patient, strategic response shows deliberative planning rather than reactive emotion. Risk-averse leaders often prefer preparing for worst-case scenarios while maintaining current advantages. Those with stronger idealistic or justice-oriented frameworks might find it difficult to continue normal relations with an ally they know is disloyal."
+                    }
+                ]
+            },
+            {
+                title: "Ethical Military Dilemma",
+                description: "Your scientists have developed a powerful new weapon that could significantly shorten the war, but its use would cause unprecedented civilian casualties and might be considered a war crime by future generations.",
+                options: [
+                    {
+                        text: "Use the weapon immediately on a high-value military target",
+                        militaryEffect: 20,
+                        diplomaticEffect: -20,
+                        civilianEffect: -15,
+                        favorableTraits: ["Decisive", "Pragmatic", "Authoritarian"],
+                        unfavorableTraits: ["Empathetic", "Idealistic"],
+                        feedback: "This decision prioritizes military victory above all other considerations, reflecting a highly pragmatic and decisive approach. Leaders with authoritarian tendencies often make such utilitarian calculations. Those with stronger empathetic or moral frameworks would likely find the human cost morally prohibitive regardless of strategic advantage."
+                    },
+                    {
+                        text: "Demonstrate the weapon on an uninhabited area and threaten its use unless the enemy surrenders",
+                        militaryEffect: 10,
+                        diplomaticEffect: -5,
+                        civilianEffect: 5,
+                        favorableTraits: ["Machiavellian", "Pragmatic", "Need for Approval"],
+                        unfavorableTraits: ["Idealistic", "Decisive"],
+                        feedback: "Your compromise approach attempts to gain military advantage while minimizing moral costs, revealing pragmatic calculation. Leaders who value public image often seek solutions that achieve objectives without crossing clear ethical lines. Those with stronger idealistic principles might reject using such a weapon even as a threat."
+                    },
+                    {
+                        text: "Keep the weapon as a deterrent but refuse to authorize its use",
+                        militaryEffect: 5,
+                        diplomaticEffect: 10,
+                        civilianEffect: 0,
+                        favorableTraits: ["Deliberative", "Idealistic", "Empathetic"],
+                        unfavorableTraits: ["Decisive", "Risk-Seeking"],
+                        feedback: "This cautious decision reflects deliberative consideration of both immediate and long-term consequences. Leaders with stronger idealistic frameworks often place ethical boundaries on acceptable actions even during wartime. More decisive or outcome-focused leaders might see this as unnecessarily prolonging the conflict when a solution is available."
+                    },
+                    {
+                        text: "Publicly renounce the weapon and dismantle the program",
+                        militaryEffect: -10,
+                        diplomaticEffect: 20,
+                        civilianEffect: 10,
+                        favorableTraits: ["Idealistic", "Empathetic", "Need for Approval"],
+                        unfavorableTraits: ["Pragmatic", "Machiavellian"],
+                        feedback: "Your principled stance prioritizes moral considerations and diplomatic standing over military advantage. Deeply idealistic leaders often make such decisions based on ethical frameworks rather than strategic calculations. Those with more pragmatic or realpolitik approaches would likely view sacrificing such an advantage as strategically irrational regardless of ethical concerns."
+                    }
+                ]
+            }
+        ];
+        
+        // Game State
+        let state = {
+            selectedLeader: null,
+            leaderTraits: [],
+            military: 70,
+            diplomatic: 70,
+            civilian: 70,
+            currentScenario: 0,
+            decisions: []
+        };
+        
+        // DOM Elements
+        const intro = document.getElementById("intro");
+        const simulation = document.getElementById("simulation");
+        const reflection = document.getElementById("reflection");
+        const leaderNameElement = document.getElementById("leader-name");
+        const historicalContextElement = document.getElementById("historical-context");
+        const traitContainerElement = document.getElementById("trait-container");
+        const scenarioTitleElement = document.getElementById("scenario-title");
+        const scenarioDescriptionElement = document.getElementById("scenario-description");
+        const optionsContainerElement = document.getElementById("options-container");
+        const resultContainerElement = document.getElementById("result-container");
+        const resultDescriptionElement = document.getElementById("result-description");
+        const feedbackTextElement = document.getElementById("feedback-text");
+        const militaryScoreElement = document.getElementById("military-score");
+        const diplomaticScoreElement = document.getElementById("diplomatic-score");
+        const civilianScoreElement = document.getElementById("civilian-score");
+        const militaryProgressElement = document.getElementById("military-progress");
+        const diplomaticProgressElement = document.getElementById("diplomatic-progress");
+        const civilianProgressElement = document.getElementById("civilian-progress");
+        const logEntriesElement = document.getElementById("log-entries");
+        const outcomeSummaryElement = document.getElementById("outcome-summary");
+        
+        // Buttons
+        const startBtn = document.getElementById("start-btn");
+        const nextBtn = document.getElementById("next-btn");
+        const restartBtn = document.getElementById("restart-btn");
+        const finalRestartBtn = document.getElementById("final-restart-btn");
+        
+        // Event Listeners
+        startBtn.addEventListener("click", startSimulation);
+        nextBtn.addEventListener("click", nextScenario);
+        restartBtn.addEventListener("click", restartSimulation);
+        finalRestartBtn.addEventListener("click", restartSimulation);
+        
+        // Functions
+        function startSimulation() {
+            intro.classList.add("hidden");
+            simulation.classList.remove("hidden");
+            
+            // Select random leader
+            state.selectedLeader = leaders[Math.floor(Math.random() * leaders.length)];
+            
+            // Assign psychological traits
+            assignTraits();
+            
+            // Update UI
+            updateLeaderProfile();
+            updateStatusBars();
+            loadScenario();
+        }
+        
+        function assignTraits() {
+            state.leaderTraits = [];
+            
+            // Add 2-3 recommended traits
+            const recommendedTraits = [...state.selectedLeader.recommendedTraits];
+            const numRecommended = Math.min(2 + Math.floor(Math.random() * 2), recommendedTraits.length);
+            
+            for (let i = 0; i < numRecommended; i++) {
+                const index = Math.floor(Math.random() * recommendedTraits.length);
+                const traitName = recommendedTraits.splice(index, 1)[0];
+                const trait = psychTraits.find(t => t.name === traitName);
+                if (trait) state.leaderTraits.push(trait);
+            }
+            
+            // Add 1-2 random traits not in contradictory list
+            const availableTraits = psychTraits.filter(trait => 
+                !state.leaderTraits.includes(trait) && 
+                !state.selectedLeader.contradictoryTraits.includes(trait.name)
+            );
+            
+            const numRandom = 1 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < numRandom && availableTraits.length > 0; i++) {
+                const index = Math.floor(Math.random() * availableTraits.length);
+                state.leaderTraits.push(availableTraits.splice(index, 1)[0]);
+            }
+        }
+        
+        function updateLeaderProfile() {
+            leaderNameElement.innerHTML = `<h3>${state.selectedLeader.name}</h3>`;
+            historicalContextElement.textContent = state.selectedLeader.context;
+            
+            // Display traits
+            traitContainerElement.innerHTML = "";
+            state.leaderTraits.forEach(trait => {
+                const traitElement = document.createElement("div");
+                traitElement.className = "trait-badge";
+                traitElement.title = trait.description;
+                traitElement.textContent = trait.name;
+                traitContainerElement.appendChild(traitElement);
+            });
+        }
+        
+        function loadScenario() {
+            if (state.currentScenario >= scenarios.length) {
+                endSimulation();
+                return;
+            }
+            
+            const scenario = scenarios[state.currentScenario];
+            
+            scenarioTitleElement.textContent = scenario.title;
+            scenarioDescriptionElement.textContent = scenario.description;
+            
+            // Create option buttons
+            optionsContainerElement.innerHTML = "";
+            scenario.options.forEach((option, index) => {
+                const button = document.createElement("button");
+                button.className = "option-btn";
+                button.textContent = option.text;
+                button.addEventListener("click", () => selectOption(index));
+                optionsContainerElement.appendChild(button);
+            });
+            
+            resultContainerElement.style.display = "none";
+        }
+        
+        function formatEffect(value) {
+            if (value > 0) return `+${value}`;
+            return value.toString();
+        }
+        
+        function selectOption(optionIndex) {
+            const scenario = scenarios[state.currentScenario];
+            const selectedOption = scenario.options[optionIndex];
+            
+            // Update scores
+            state.military += selectedOption.militaryEffect;
+            state.diplomatic += selectedOption.diplomaticEffect;
+            state.civilian += selectedOption.civilianEffect;
+            
+            // Ensure scores stay within 0-100 range
+            state.military = Math.max(0, Math.min(100, state.military));
+            state.diplomatic = Math.max(0, Math.min(100, state.diplomatic));
+            state.civilian = Math.max(0, Math.min(100, state.civilian));
+            
+            // Update UI
+            updateStatusBars();
+            
+            // Record decision
+            state.decisions.push({
+                scenario: scenario.title,
+                decision: selectedOption.text,
+                effects: {
+                    military: selectedOption.militaryEffect,
+                    diplomatic: selectedOption.diplomaticEffect,
+                    civilian: selectedOption.civilianEffect
+                }
+            });
+            
+            // Add to log
+            const logEntry = document.createElement("div");
+            logEntry.className = "log-entry";
+            logEntry.innerHTML = `
+                <strong>${scenario.title}:</strong> ${selectedOption.text}
+                <div><small>Effects: Military ${formatEffect(selectedOption.militaryEffect)}, 
+                Diplomatic ${formatEffect(selectedOption.diplomaticEffect)}, 
+                Civilian ${formatEffect(selectedOption.civilianEffect)}</small></div>
+            `;
+            logEntriesElement.appendChild(logEntry);
+            
+            // Generate psychological feedback
+            const psychFeedback = generatePsychologicalFeedback(selectedOption);
+            
+            // Display result
+            resultDescriptionElement.innerHTML = `
+                <p>You chose to: <strong>${selectedOption.text}</strong></p>
+                <p>This had the following effects:</p>
+                <ul>
+                    <li>Military Strength: ${formatEffect(selectedOption.militaryEffect)}</li>
+                    <li>Diplomatic Relations: ${formatEffect(selectedOption.diplomaticEffect)}</li>
+                    <li>Civilian Support: ${formatEffect(selectedOption.civilianEffect)}</li>
+                </ul>
+            `;
+            
+            feedbackTextElement.innerHTML = psychFeedback;
+            
+            resultContainerElement.style.display = "block";
+        }
+        
+        function generatePsychologicalFeedback(option) {
+            // Check alignment with player traits
+            const favorableTraitMatches = option.favorableTraits.filter(trait => 
+                state.leaderTraits.some(t => t.name === trait)
+            );
+            
+            const unfavorableTraitMatches = option.unfavorableTraits.filter(trait => 
+                state.leaderTraits.some(t => t.name === trait)
+            );
+            
+            let feedback = option.feedback;
+            
+            if (favorableTraitMatches.length > 0) {
+                feedback += `<p><strong>Alignment with your traits:</strong> This decision aligns with your ${favorableTraitMatches.join(" and ")} tendencies.</p>`;
+            }
+            
+            if (unfavorableTraitMatches.length > 0) {
+                feedback += `<p><strong>Tension with your traits:</strong> This decision may have been challenging for you given your ${unfavorableTraitMatches.join(" and ")} tendencies.</p>`;
+            }
+            
+            // Add cognitive bias observation
+            const biases = [
+                "Your decision may reflect confirmation bias, where you favored information that confirmed your existing beliefs.",
+                "This choice might show loss aversion, where you gave more weight to avoiding losses than acquiring gains.",
+                "Your decision could demonstrate the availability heuristic, where you relied on immediate examples that came to mind.",
+                "This choice suggests anchoring bias, where you relied heavily on the first piece of information encountered.",
+                "Your decision may reflect the sunk cost fallacy, where previous investments influenced your current choice.",
+                "This choice might demonstrate hindsight bias, where past outcomes seemed more predictable than they actually were."
+            ];
+            
+            const randomBias = biases[Math.floor(Math.random() * biases.length)];
+            
+            feedback += `<p><strong>Potential Cognitive Bias:</strong> ${randomBias}</p>`;
+            
+            return feedback;
+        }
+        
+        function nextScenario() {
+            state.currentScenario++;
+            loadScenario();
+        }
+        
+        function updateStatusBars() {
+            militaryScoreElement.textContent = state.military;
+            diplomaticScoreElement.textContent = state.diplomatic;
+            civilianScoreElement.textContent = state.civilian;
+            
+            militaryProgressElement.style.width = `${state.military}%`;
+            diplomaticProgressElement.style.width = `${state.diplomatic}%`;
+            civilianProgressElement.style.width = `${state.civilian}%`;
+        }
+        
+        function endSimulation() {
+            simulation.classList.add("hidden");
+            reflection.classList.remove("hidden");
+            
+            // Generate outcome summary
+            let outcome = "";
+            
+            if (state.military < 30) {
+                outcome += "<p>Your military forces have been severely weakened, leaving your nation vulnerable to further aggression.</p>";
+            } else if (state.military > 70) {
+                outcome += "<p>Your military remains strong and capable, providing security and leverage in the post-war world.</p>";
+            } else {
+                outcome += "<p>Your military has survived the conflict in reasonable condition, though with significant losses.</p>";
+            }
+            
+            if (state.diplomatic < 30) {
+                outcome += "<p>Your diplomatic standing has been severely damaged, leaving you isolated in the international community.</p>";
+            } else if (state.diplomatic > 70) {
+                outcome += "<p>Your diplomatic efforts have earned you strong allies and international respect, positioning you well for the future.</p>";
+            } else {
+                outcome += "<p>Your diplomatic relationships remain functional, if strained by the events of the war.</p>";
+            }
+            
+            if (state.civilian < 30) {
+                outcome += "<p>Civilian morale is at a breaking point, with unrest threatening stability at home.</p>";
+            } else if (state.civilian > 70) {
+                outcome += "<p>The civilian population remains unified and supportive of your leadership despite wartime hardships.</p>";
+            } else {
+                outcome += "<p>The civilian population has endured the hardships of war, but the social fabric remains intact.</p>";
+            }
+            
+            // Leadership style assessment
+            let leadershipStyle = "";
+            
+            if (state.military > Math.max(state.diplomatic, state.civilian)) {
+                leadershipStyle = "Your leadership style prioritized military objectives above all else, reflecting a security-focused approach to the conflict.";
+            } else if (state.diplomatic > Math.max(state.military, state.civilian)) {
+                leadershipStyle = "Your leadership style emphasized diplomatic solutions and international relationships throughout the conflict.";
+            } else if (state.civilian > Math.max(state.military, state.diplomatic)) {
+                leadershipStyle = "Your leadership style consistently prioritized civilian welfare, even when it created strategic challenges.";
+            } else {
+                leadershipStyle = "Your leadership style showed a balanced approach to military, diplomatic, and civilian considerations.";
+            }
+            
+            // Trait influence
+            const traitNames = state.leaderTraits.map(t => t.name).join(", ");
+            const traitInfluence = `Your psychological traits (${traitNames}) significantly shaped your decision-making patterns throughout the conflict.`;
+            
+            outcomeSummaryElement.innerHTML = `
+                <h3>Historical Outcome</h3>
+                ${outcome}
+                <h3>Leadership Assessment</h3>
+                <p>${leadershipStyle}</p>
+                <p>${traitInfluence}</p>
+            `;
+        }
+        
+        function restartSimulation() {
+            // Reset state
+            state = {
+                selectedLeader: null,
+                leaderTraits: [],
+                military: 70,
+                diplomatic: 70,
+                civilian: 70,
+                currentScenario: 0,
+                decisions: []
+            };
+            
+            // Clear log
+            logEntriesElement.innerHTML = "";
+            
+            // Go back to start
+            reflection.classList.add("hidden");
+            simulation.classList.add("hidden");
+            intro.classList.remove("hidden");
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multipolar System Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .game-board {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .nation {
+            flex: 1;
+            min-width: 220px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            position: relative;
+        }
+        .player-nation {
+            border: 2px solid #3498db;
+            background-color: #ebf5fb;
+        }
+        .nation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .nation-name {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .stats {
+            margin-bottom: 15px;
+        }
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .alliances {
+            margin-bottom: 15px;
+        }
+        .alliance {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px;
+            margin-bottom: 5px;
+            background-color: #e8f4f8;
+            border-radius: 4px;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .action-btn {
+            width: 100%;
+        }
+        .event-log {
+            height: 200px;
+            overflow-y: scroll;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+            margin-bottom: 20px;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        .turn-info {
+            font-weight: bold;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 100;
+        }
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .modal-title {
+            margin-top: 0;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .alliance-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        .alliance-option:hover {
+            background-color: #e8f4f8;
+        }
+        .option-details {
+            display: flex;
+            flex-direction: column;
+        }
+        progress {
+            width: 100%;
+            height: 15px;
+            margin-top: 5px;
+        }
+        .threat-high {
+            color: #e74c3c;
+        }
+        .threat-medium {
+            color: #f39c12;
+        }
+        .threat-low {
+            color: #27ae60;
+        }
+        .tooltip {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            cursor: help;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .event-notification {
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            color: #721c24;
+        }
+        .instruction-panel {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #e8f6fe;
+            border: 1px solid #b8e2f2;
+            border-radius: 4px;
+        }
+        .war-status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .at-war {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .at-peace {
+            background-color: #2ecc71;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Multipolar International System Simulation</h1>
+            <p>Experience alliance dynamics, balancing, bandwagoning, and power politics in a multipolar world</p>
+        </div>
+
+        <div class="instruction-panel">
+            <h3>Simulation Instructions</h3>
+            <p>You are leading a nation in a multipolar international system. Your goal is to maximize your nation's security and power through strategic alliances and decisions.</p>
+            <p><strong>Key Concepts:</strong></p>
+            <ul>
+                <li><strong>Balancing:</strong> Forming alliances to counter a threatening power</li>
+                <li><strong>Bandwagoning:</strong> Aligning with the strongest or most threatening power</li>
+                <li><strong>Alliance Dilemmas:</strong> Managing commitments while pursuing self-interest</li>
+            </ul>
+            <p><strong>Game Mechanics:</strong></p>
+            <ul>
+                <li>Each turn, you can form alliances, invest in capabilities, or take other actions</li>
+                <li>Random events will test your diplomatic skills and alliance commitments</li>
+                <li>Your security depends on your own power and your alliance network</li>
+            </ul>
+            <button id="start-game" class="action-btn">Start Simulation</button>
+        </div>
+
+        <div id="game-container" style="display: none;">
+            <div class="game-info">
+                <div class="turn-info">Turn: <span id="current-turn">1</span> of 10</div>
+                <div class="world-status">World Status: <span id="world-status" class="at-peace">Peace</span></div>
+            </div>
+
+            <div id="event-container" style="display: none;" class="event-notification">
+                <h3 id="event-title">Global Event</h3>
+                <p id="event-description"></p>
+                <button id="event-action" class="action-btn">Acknowledge</button>
+            </div>
+
+            <h2>Nations</h2>
+            <div class="game-board" id="nations-container">
+                <!-- Nations will be populated here by JavaScript -->
+            </div>
+
+            <h2>Event Log</h2>
+            <div class="event-log" id="event-log">
+                <div class="log-entry">Simulation started. You are leading your nation in a complex international environment.</div>
+            </div>
+
+            <div class="controls">
+                <button id="next-turn" class="action-btn">End Turn</button>
+            </div>
+        </div>
+
+        <!-- Alliance Formation Modal -->
+        <div id="alliance-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" id="close-alliance-modal">&times;</span>
+                <h2 class="modal-title">Form New Alliance</h2>
+                <div id="alliance-options">
+                    <!-- Alliance options will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Modal -->
+        <div id="action-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" id="close-action-modal">&times;</span>
+                <h2 class="modal-title">Nation Actions</h2>
+                <div id="action-options">
+                    <button class="action-btn" id="increase-military">Increase Military Capability (+10 Military, -5 Economic)</button>
+                    <button class="action-btn" id="increase-economic">Increase Economic Capability (+10 Economic, -5 Diplomatic)</button>
+                    <button class="action-btn" id="increase-diplomatic">Increase Diplomatic Capability (+10 Diplomatic, -5 Military)</button>
+                    <button class="action-btn" id="form-alliance">Form or Modify Alliance</button>
+                    <button class="action-btn" id="break-alliance">Break Alliance</button>
+                    <button class="action-btn" id="declare-war">Declare War</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Break Alliance Modal -->
+        <div id="break-alliance-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" id="close-break-modal">&times;</span>
+                <h2 class="modal-title">Break Alliance</h2>
+                <div id="break-options">
+                    <!-- Break alliance options will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- War Declaration Modal -->
+        <div id="war-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" id="close-war-modal">&times;</span>
+                <h2 class="modal-title">Declare War</h2>
+                <p>Choose a nation to declare war against:</p>
+                <div id="war-options">
+                    <!-- War options will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Modal -->
+        <div id="results-modal" class="modal">
+            <div class="modal-content">
+                <h2 class="modal-title">Simulation Results</h2>
+                <div id="results-content">
+                    <!-- Results will be populated here -->
+                </div>
+                <button id="restart-game" class="action-btn">Restart Simulation</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            turn: 1,
+            maxTurns: 10,
+            player: null,
+            nations: [],
+            alliances: [],
+            wars: [],
+            events: [
+                {
+                    title: "Rising Power",
+                    description: "A nation has rapidly increased its capabilities, disrupting the balance of power.",
+                    effect: function() {
+                        const randomNation = getRandomNation(true);
+                        randomNation.military += 30;
+                        randomNation.economic += 20;
+                        return `${randomNation.name} has dramatically increased its capabilities, becoming a potential regional hegemon.`;
+                    },
+                    minTurn: 3
+                },
+                {
+                    title: "Economic Crisis",
+                    description: "A global economic crisis has erupted, affecting all nations differently.",
+                    effect: function() {
+                        gameState.nations.forEach(nation => {
+                            nation.economic -= Math.floor(Math.random() * 20) + 10;
+                            if (nation.economic < 10) nation.economic = 10;
+                        });
+                        return "All nations have suffered economic damage, weakening some alliance structures.";
+                    },
+                    minTurn: 2
+                },
+                {
+                    title: "Technological Breakthrough",
+                    description: "A nation has achieved a significant military technological breakthrough.",
+                    effect: function() {
+                        const randomNation = getRandomNation(false);
+                        randomNation.military += 25;
+                        return `${randomNation.name} has developed advanced military technology, increasing its capabilities significantly.`;
+                    },
+                    minTurn: 4
+                },
+                {
+                    title: "Diplomatic Scandal",
+                    description: "A major diplomatic scandal has erupted, straining international relations.",
+                    effect: function() {
+                        const randomNation = getRandomNation(true);
+                        randomNation.diplomatic -= 15;
+                        if (randomNation.diplomatic < 10) randomNation.diplomatic = 10;
+                        
+                        // Strain alliances
+                        gameState.alliances = gameState.alliances.filter(alliance => {
+                            if (alliance.members.includes(randomNation.id)) {
+                                if (Math.random() < 0.3) {
+                                    logEvent(`The alliance between ${getNationById(alliance.members[0]).name} and ${getNationById(alliance.members[1]).name} has collapsed due to the diplomatic scandal.`);
+                                    return false;
+                                }
+                            }
+                            return true;
+                        });
+                        
+                        return `${randomNation.name} has suffered a major diplomatic setback, weakening its international position.`;
+                    },
+                    minTurn: 3
+                },
+                {
+                    title: "Resource Discovery",
+                    description: "Valuable resources have been discovered in a nation's territory.",
+                    effect: function() {
+                        const randomNation = getRandomNation(false);
+                        randomNation.economic += 25;
+                        return `${randomNation.name} has discovered valuable resources, boosting its economic power.`;
+                    },
+                    minTurn: 2
+                },
+                {
+                    title: "Civil Unrest",
+                    description: "Internal instability has weakened a nation's position.",
+                    effect: function() {
+                        const randomNation = getRandomNation(true);
+                        randomNation.military -= 15;
+                        randomNation.economic -= 10;
+                        if (randomNation.military < 10) randomNation.military = 10;
+                        if (randomNation.economic < 10) randomNation.economic = 10;
+                        return `${randomNation.name} is experiencing civil unrest, weakening its overall position.`;
+                    },
+                    minTurn: 5
+                },
+                {
+                    title: "Security Dilemma Escalation",
+                    description: "Military buildups have created a tense security dilemma.",
+                    effect: function() {
+                        gameState.nations.forEach(nation => {
+                            nation.military += Math.floor(Math.random() * 15) + 5;
+                        });
+                        
+                        // Increase chance of war
+                        if (Math.random() < 0.4 && gameState.wars.length === 0) {
+                            const aggressor = getRandomNation(true);
+                            const target = getRandomNation(true, aggressor.id);
+                            
+                            if (aggressor && target) {
+                                startWar(aggressor, target);
+                                return `Tensions have escalated into war! ${aggressor.name} has attacked ${target.name}!`;
+                            }
+                        }
+                        
+                        return "Nations are rapidly building up military capabilities, increasing global tensions.";
+                    },
+                    minTurn: 4
+                }
+            ],
+            currentEvent: null,
+            warProbability: 0.1
+        };
+
+        // Nation factory function
+        function createNation(id, name, isPlayer = false) {
+            return {
+                id: id,
+                name: name,
+                isPlayer: isPlayer,
+                military: 50 + Math.floor(Math.random() * 30),
+                economic: 50 + Math.floor(Math.random() * 30),
+                diplomatic: 50 + Math.floor(Math.random() * 30),
+                threatLevel: 0,
+                securityLevel: 0,
+                allianceStrategy: Math.random() < 0.5 ? "balancing" : "bandwagoning",
+                atWar: false
+            };
+        }
+
+        // Initialize the game
+        function initGame() {
+            // Create nations
+            gameState.nations = [
+                createNation(1, "Westland", true),
+                createNation(2, "Eastoria"),
+                createNation(3, "Northia"),
+                createNation(4, "Southland"),
+                createNation(5, "Centralus")
+            ];
+
+            // Set player nation
+            gameState.player = gameState.nations[0];
+
+            // Update the UI
+            updateUI();
+            
+            // Log the start of the game
+            logEvent("The simulation has begun. The international system is currently multipolar with no dominant power.");
+        }
+
+        // Get a random nation (excluding player if specified)
+        function getRandomNation(excludePlayer = false, excludeId = null) {
+            let eligibleNations = gameState.nations.filter(nation => 
+                (!excludePlayer || !nation.isPlayer) && 
+                (excludeId === null || nation.id !== excludeId)
+            );
+            
+            if (eligibleNations.length === 0) return null;
+            
+            return eligibleNations[Math.floor(Math.random() * eligibleNations.length)];
+        }
+
+        // Get nation by ID
+        function getNationById(id) {
+            return gameState.nations.find(nation => nation.id === id);
+        }
+
+        // Calculate threat levels for each nation
+        function calculateThreatLevels() {
+            // Reset threat levels
+            gameState.nations.forEach(nation => {
+                nation.threatLevel = 0;
+            });
+            
+            // Calculate relative power and proximity-based threats
+            gameState.nations.forEach(nationA => {
+                gameState.nations.forEach(nationB => {
+                    if (nationA.id !== nationB.id) {
+                        // Basic power calculation
+                        const powerDifference = (nationB.military + nationB.economic) - (nationA.military + nationA.economic);
+                        
+                        // If the other nation is stronger, they pose some threat
+                        if (powerDifference > 0) {
+                            nationA.threatLevel += powerDifference / 10;
+                        }
+                        
+                        // If they're at war, much higher threat
+                        if (areNationsAtWar(nationA.id, nationB.id)) {
+                            nationA.threatLevel += 50;
+                        }
+                    }
+                });
+                
+                // Normalize threat level
+                nationA.threatLevel = Math.min(100, Math.max(0, Math.round(nationA.threatLevel)));
+            });
+        }
+
+        // Calculate security levels for each nation
+        function calculateSecurityLevels() {
+            gameState.nations.forEach(nation => {
+                // Base security from own capabilities
+                nation.securityLevel = (nation.military * 0.7) + (nation.economic * 0.2) + (nation.diplomatic * 0.1);
+                
+                // Add security from alliances
+                const alliances = gameState.alliances.filter(a => a.members.includes(nation.id));
+                
+                alliances.forEach(alliance => {
+                    const allyId = alliance.members.find(id => id !== nation.id);
+                    const ally = getNationById(allyId);
+                    
+                    if (ally) {
+                        // Alliance strength based on ally's military and commitment level
+                        nation.securityLevel += (ally.military * alliance.strength) / 100;
+                    }
+                });
+                
+                // Reduce security based on threat level
+                nation.securityLevel -= nation.threatLevel * 0.5;
+                
+                // Normalize security level
+                nation.securityLevel = Math.min(100, Math.max(0, Math.round(nation.securityLevel)));
+            });
+        }
+
+        // Alliance functions
+        function createAlliance(nationId1, nationId2, strength = 70) {
+            // Check if an alliance already exists
+            const existingAlliance = gameState.alliances.find(a => 
+                (a.members.includes(nationId1) && a.members.includes(nationId2))
+            );
+            
+            if (existingAlliance) {
+                existingAlliance.strength = strength;
+                return existingAlliance;
+            }
+            
+            const alliance = {
+                id: gameState.alliances.length + 1,
+                members: [nationId1, nationId2],
+                strength: strength, // 0-100, representing how reliable the alliance is
+                turnFormed: gameState.turn
+            };
+            
+            gameState.alliances.push(alliance);
+            
+            // Log the alliance formation
+            logEvent(`An alliance has been formed between ${getNationById(nationId1).name} and ${getNationById(nationId2).name}.`);
+            
+            return alliance;
+        }
+
+        function breakAlliance(allianceId) {
+            const alliance = gameState.alliances.find(a => a.id === allianceId);
+            
+            if (alliance) {
+                gameState.alliances = gameState.alliances.filter(a => a.id !== allianceId);
+                
+                // Log the alliance breaking
+                logEvent(`The alliance between ${getNationById(alliance.members[0]).name} and ${getNationById(alliance.members[1]).name} has been dissolved.`);
+                
+                // Diplomatic consequences for breaking an alliance
+                if (alliance.members.includes(gameState.player.id)) {
+                    const otherId = alliance.members.find(id => id !== gameState.player.id);
+                    const otherNation = getNationById(otherId);
+                    
+                    if (otherNation) {
+                        gameState.player.diplomatic -= 10;
+                        logEvent(`Your diplomatic reputation has suffered from breaking the alliance with ${otherNation.name}.`);
+                    }
+                }
+            }
+        }
+
+        // War functions
+        function startWar(aggressor, target) {
+            if (areNationsAtWar(aggressor.id, target.id)) return;
+            
+            const war = {
+                id: gameState.wars.length + 1,
+                aggressor: aggressor.id,
+                target: target.id,
+                turnStarted: gameState.turn,
+                ongoing: true
+            };
+            
+            gameState.wars.push(war);
+            
+            // Update nation states
+            aggressor.atWar = true;
+            target.atWar = true;
+            
+            // Log the war starting
+            logEvent(`WAR! ${aggressor.name} has declared war on ${target.name}!`);
+            
+            // Check for alliance obligations
+            checkAllianceObligations(aggressor, target);
+            
+            // Update world status
+            document.getElementById('world-status').textContent = 'War';
+            document.getElementById('world-status').className = 'at-war';
+        }
+
+        function checkAllianceObligations(aggressor, target) {
+            // Find alliances with the target
+            const targetAlliances = gameState.alliances.filter(a => a.members.includes(target.id));
+            
+            targetAlliances.forEach(alliance => {
+                const allyId = alliance.members.find(id => id !== target.id);
+                const ally = getNationById(allyId);
+                
+                if (ally && !areNationsAtWar(ally.id, aggressor.id)) {
+                    // Ally decision based on alliance strength and own capabilities
+                    const honorAlliance = Math.random() * 100 < alliance.strength;
+                    
+                    if (honorAlliance) {
+                        startWar(ally, aggressor);
+                        logEvent(`${ally.name} has honored its alliance with ${target.name} and entered the war against ${aggressor.name}.`);
+                    } else {
+                        logEvent(`${ally.name} has chosen not to honor its alliance with ${target.name} against ${aggressor.name}.`);
+                        breakAlliance(alliance.id);
+                    }
+                }
+            });
+        }
+
+        function resolveWar(war) {
+            const aggressor = getNationById(war.aggressor);
+            const target = getNationById(war.target);
+            
+            if (!aggressor || !target) return;
+            
+            // Calculate war power (military with some randomness)
+            const aggressorPower = aggressor.military * (1 + Math.random() * 0.3);
+            const targetPower = target.military * (1 + Math.random() * 0.3);
+            
+            // Determine winner
+            if (aggressorPower > targetPower) {
+                // Aggressor wins
+                target.military -= Math.floor(target.military * 0.2);
+                target.economic -= Math.floor(target.economic * 0.1);
+                aggressor.military -= Math.floor(aggressor.military * 0.1);
+                
+                logEvent(`${aggressor.name} has won the war against ${target.name}! ${target.name} has suffered significant losses.`);
+            } else {
+                // Target wins
+                aggressor.military -= Math.floor(aggressor.military * 0.2);
+                aggressor.economic -= Math.floor(aggressor.economic * 0.1);
+                target.military -= Math.floor(target.military * 0.1);
+                
+                logEvent(`${target.name} has successfully defended against ${aggressor.name}'s attack! ${aggressor.name} has suffered significant losses.`);
+            }
+            
+            // End the war
+            war.ongoing = false;
+            aggressor.atWar = false;
+            target.atWar = false;
+            
+            // Check if there are any ongoing wars
+            const ongoingWars = gameState.wars.filter(w => w.ongoing);
+            if (ongoingWars.length === 0) {
+                document.getElementById('world-status').textContent = 'Peace';
+                document.getElementById('world-status').className = 'at-peace';
+            }
+        }
+
+        function areNationsAtWar(nationId1, nationId2) {
+            return gameState.wars.some(war => 
+                war.ongoing && 
+                ((war.aggressor === nationId1 && war.target === nationId2) || 
+                 (war.aggressor === nationId2 && war.target === nationId1))
+            );
+        }
+
+        // AI decision making
+        function makeAIDecisions() {
+            gameState.nations.forEach(nation => {
+                if (!nation.isPlayer) {
+                    // Skip if nation has already taken an action this turn
+                    if (nation.actionTaken) return;
+                    
+                    // Decide on capability investments
+                    if (Math.random() < 0.3) {
+                        const capability = Math.floor(Math.random() * 3);
+                        if (capability === 0) {
+                            nation.military += 10;
+                            nation.economic -= 5;
+                            logEvent(`${nation.name} has increased its military capabilities.`);
+                        } else if (capability === 1) {
+                            nation.economic += 10;
+                            nation.diplomatic -= 5;
+                            logEvent(`${nation.name} has focused on economic development.`);
+                        } else {
+                            nation.diplomatic += 10;
+                            nation.military -= 5;
+                            logEvent(`${nation.name} has invested in diplomatic initiatives.`);
+                        }
+                        
+                        // Ensure no stat goes below 10
+                        nation.military = Math.max(10, nation.military);
+                        nation.economic = Math.max(10, nation.economic);
+                        nation.diplomatic = Math.max(10, nation.diplomatic);
+                    }
+                    
+                    // Alliance decisions
+                    const existingAlliances = gameState.alliances.filter(a => a.members.includes(nation.id));
+                    
+                    // If nation has high threat and few alliances, seek new ones
+                    if (nation.threatLevel > 50 && existingAlliances.length < 2) {
+                        const potentialAllies = gameState.nations.filter(other => 
+                            other.id !== nation.id && 
+                            !existingAlliances.some(a => a.members.includes(other.id)) &&
+                            !areNationsAtWar(nation.id, other.id)
+                        );
+                        
+                        if (potentialAllies.length > 0) {
+                            let chosen;
+                            
+                            // Balancing: ally with others against the most threatening nation
+                            if (nation.allianceStrategy === "balancing") {
+                                // Sort by military power in descending order
+                                const sortedByPower = [...gameState.nations].sort((a, b) => b.military - a.military);
+                                
+                                // Find the most powerful nation that isn't already an ally
+                                const mostPowerful = sortedByPower.find(n => 
+                                    n.id !== nation.id && 
+                                    !existingAlliances.some(a => a.members.includes(n.id))
+                                );
+                                
+                                // Choose an ally that isn't allied with the most powerful
+                                chosen = potentialAllies.find(n => 
+                                    !gameState.alliances.some(a => 
+                                        a.members.includes(n.id) && a.members.includes(mostPowerful.id)
+                                    )
+                                );
+                                
+                                if (!chosen && potentialAllies.length > 0) {
+                                    // If no perfect candidate, just pick a random one
+                                    chosen = potentialAllies[Math.floor(Math.random() * potentialAllies.length)];
+                                }
+                            } 
+                            // Bandwagoning: ally with the strongest or most threatening nation
+                            else if (nation.allianceStrategy === "bandwagoning") {
+                                // Sort nations by military power
+                                const sortedByPower = [...potentialAllies].sort((a, b) => b.military - a.military);
+                                
+                                if (sortedByPower.length > 0) {
+                                    chosen = sortedByPower[0];
+                                }
+                            }
+                            
+                            if (chosen) {
+                                createAlliance(nation.id, chosen.id, 60 + Math.floor(Math.random() * 30));
+                            }
+                        }
+                    }
+                    
+                    // War decisions
+                    if (!nation.atWar && nation.threatLevel > 70 && nation.military > 60 && Math.random() < gameState.warProbability) {
+                        // Find potential targets
+                        const potentialTargets = gameState.nations.filter(other => 
+                            other.id !== nation.id && 
+                            !existingAlliances.some(a => a.members.includes(other.id)) &&
+                            !areNationsAtWar(nation.id, other.id) &&
+                            other.military < nation.military // Only attack weaker nations
+                        );
+                        
+                        if (potentialTargets.length > 0) {
+                            const target = potentialTargets[Math.floor(Math.random() * potentialTargets.length)];
+                            startWar(nation, target);
+                        }
+                    }
+                    
+                    // Mark action as taken
+                    nation.actionTaken = true;
+                }
+            });
+        }
+
+        // Event handling
+        function triggerRandomEvent() {
+            const eligibleEvents = gameState.events.filter(e => gameState.turn >= e.minTurn);
+            
+            if (eligibleEvents.length > 0 && Math.random() < 0.3) {
+                const event = eligibleEvents[Math.floor(Math.random() * eligibleEvents.length)];
+                gameState.currentEvent = event;
+                
+                // Apply event effect
+                const effectResult = event.effect();
+                
+                // Show event notification
+                document.getElementById('event-title').textContent = event.title;
+                document.getElementById('event-description').textContent = event.description + " " + effectResult;
+                document.getElementById('event-container').style.display = 'block';
+                
+                // Log the event
+                logEvent(`EVENT: ${event.title} - ${effectResult}`);
+                
+                return true;
+            }
+            
+            return false;
+        }
+
+        // UI functions
+        function updateUI() {
+            // Calculate threat and security levels
+            calculateThreatLevels();
+            calculateSecurityLevels();
+            
+            // Update turn counter
+            document.getElementById('current-turn').textContent = gameState.turn;
+            
+            // Update nations
+            const nationsContainer = document.getElementById('nations-container');
+            nationsContainer.innerHTML = '';
+            
+            gameState.nations.forEach(nation => {
+                const nationElement = document.createElement('div');
+                nationElement.className = `nation ${nation.isPlayer ? 'player-nation' : ''}`;
+                
+                // Determine threat display
+                let threatClass = 'threat-low';
+                if (nation.threatLevel > 70) {
+                    threatClass = 'threat-high';
+                } else if (nation.threatLevel > 40) {
+                    threatClass = 'threat-medium';
+                }
+                
+                // Get nation alliances
+                const nationAlliances = gameState.alliances.filter(a => a.members.includes(nation.id));
+                const alliancesHtml = nationAlliances.map(alliance => {
+                    const allyId = alliance.members.find(id => id !== nation.id);
+                    const ally = getNationById(allyId);
+                    return `
+                        <div class="alliance">
+                            <span>${ally ? ally.name : 'Unknown'}</span>
+                            <span>Strength: ${alliance.strength}%</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                // War status
+                const warStatus = nation.atWar ? 
+                    '<span class="war-status at-war">At War</span>' : 
+                    '<span class="war-status at-peace">At Peace</span>';
+                
+                nationElement.innerHTML = `
+                    <div class="tooltip">?
+                        <span class="tooltip-text">${nation.allianceStrategy === "balancing" ? 
+                            "This nation tends to form alliances to counter threats" : 
+                            "This nation tends to ally with the strongest powers"}</span>
+                    </div>
+                    <div class="nation-header">
+                        <div class="nation-name">${nation.name} ${nation.isPlayer ? '(You)' : ''}</div>
+                        ${warStatus}
+                    </div>
+                    <div class="stats">
+                        <div class="stat">
+                            <span>Military:</span>
+                            <span>${nation.military}</span>
+                        </div>
+                        <div class="stat">
+                            <span>Economic:</span>
+                            <span>${nation.economic}</span>
+                        </div>
+                        <div class="stat">
+                            <span>Diplomatic:</span>
+                            <span>${nation.diplomatic}</span>
+                        </div>
+                        <div class="stat">
+                            <span>Threat Level:</span>
+                            <span class="${threatClass}">${nation.threatLevel}</span>
+                        </div>
+                        <div class="stat">
+                            <span>Security Level:</span>
+                            <span>${nation.securityLevel}</span>
+                        </div>
+                        <div class="stat">
+                            <span>Strategy:</span>
+                            <span>${nation.allianceStrategy}</span>
+                        </div>
+                    </div>
+                    <div class="alliances">
+                        <h4>Alliances</h4>
+                        ${alliancesHtml || '<p>No active alliances</p>'}
+                    </div>
+                    ${nation.isPlayer ? `
+                        <div class="controls">
+                            <button class="action-btn" onclick="openActionModal()">Take Actions</button>
+                        </div>
+                    ` : ''}
+                `;
+                
+                nationsContainer.appendChild(nationElement);
+            });
+        }
+
+        function openActionModal() {
+            document.getElementById('action-modal').style.display = 'block';
+        }
+
+        function closeActionModal() {
+            document.getElementById('action-modal').style.display = 'none';
+        }
+
+        function openAllianceModal() {
+            const allianceOptions = document.getElementById('alliance-options');
+            allianceOptions.innerHTML = '';
+            
+            // Get existing alliances
+            const existingAlliances = gameState.alliances.filter(a => a.members.includes(gameState.player.id));
+            const alliancePartners = existingAlliances.map(a => a.members.find(id => id !== gameState.player.id));
+            
+            // Get potential alliance partners
+            gameState.nations.forEach(nation => {
+                if (nation.id !== gameState.player.id && !areNationsAtWar(gameState.player.id, nation.id)) {
+                    const isExistingAlly = alliancePartners.includes(nation.id);
+                    const existingAlliance = isExistingAlly ? 
+                        existingAlliances.find(a => a.members.includes(nation.id)) : null;
+                    
+                    const option = document.createElement('div');
+                    option.className = 'alliance-option';
+                    
+                    option.innerHTML = `
+                        <div class="option-details">
+                            <strong>${nation.name}</strong>
+                            <span>Military: ${nation.military} | Economic: ${nation.economic} | Diplomatic: ${nation.diplomatic}</span>
+                            <span>Current Strategy: ${nation.allianceStrategy}</span>
+                            ${isExistingAlly ? `<span>Current Alliance Strength: ${existingAlliance.strength}%</span>` : ''}
+                        </div>
+                        <button onclick="formAlliance(${nation.id}, ${isExistingAlly ? existingAlliance.strength : 70})">
+                            ${isExistingAlly ? 'Strengthen Alliance' : 'Form Alliance'}
+                        </button>
+                    `;
+                    
+                    allianceOptions.appendChild(option);
+                }
+            });
+            
+            document.getElementById('alliance-modal').style.display = 'block';
+        }
+
+        function closeAllianceModal() {
+            document.getElementById('alliance-modal').style.display = 'none';
+        }
+
+        function openBreakAllianceModal() {
+            const breakOptions = document.getElementById('break-options');
+            breakOptions.innerHTML = '';
+            
+            // Get existing alliances
+            const existingAlliances = gameState.alliances.filter(a => a.members.includes(gameState.player.id));
+            
+            if (existingAlliances.length === 0) {
+                breakOptions.innerHTML = '<p>You have no current alliances to break.</p>';
+            } else {
+                existingAlliances.forEach(alliance => {
+                    const allyId = alliance.members.find(id => id !== gameState.player.id);
+                    const ally = getNationById(allyId);
+                    
+                    const option = document.createElement('div');
+                    option.className = 'alliance-option';
+                    
+                    option.innerHTML = `
+                        <div class="option-details">
+                            <strong>${ally.name}</strong>
+                            <span>Alliance Strength: ${alliance.strength}%</span>
+                            <span>Formed on Turn: ${alliance.turnFormed}</span>
+                        </div>
+                        <button onclick="breakPlayerAlliance(${alliance.id})">Break Alliance</button>
+                    `;
+                    
+                    breakOptions.appendChild(option);
+                });
+            }
+            
+            document.getElementById('break-alliance-modal').style.display = 'block';
+        }
+
+        function closeBreakAllianceModal() {
+            document.getElementById('break-alliance-modal').style.display = 'none';
+        }
+
+        function openWarModal() {
+            const warOptions = document.getElementById('war-options');
+            warOptions.innerHTML = '';
+            
+            // Get potential war targets
+            gameState.nations.forEach(nation => {
+                if (nation.id !== gameState.player.id && !areNationsAtWar(gameState.player.id, nation.id)) {
+                    const option = document.createElement('div');
+                    option.className = 'alliance-option';
+                    
+                    // Check if target has alliances that might join the war
+                    const targetAlliances = gameState.alliances.filter(a => a.members.includes(nation.id));
+                    const allianceWarnings = targetAlliances.map(alliance => {
+                        const allyId = alliance.members.find(id => id !== nation.id);
+                        const ally = getNationById(allyId);
+                        return `<span class="threat-medium">${ally.name} may join the war (${alliance.strength}% alliance strength)</span>`;
+                    }).join('');
+                    
+                    option.innerHTML = `
+                        <div class="option-details">
+                            <strong>${nation.name}</strong>
+                            <span>Military: ${nation.military} | Your Military: ${gameState.player.military}</span>
+                            ${allianceWarnings ? `<div class="war-warnings">${allianceWarnings}</div>` : ''}
+                        </div>
+                        <button onclick="declareWar(${nation.id})">Declare War</button>
+                    `;
+                    
+                    warOptions.appendChild(option);
+                }
+            });
+            
+            document.getElementById('war-modal').style.display = 'block';
+        }
+
+        function closeWarModal() {
+            document.getElementById('war-modal').style.display = 'none';
+        }
+
+        function showResultsModal() {
+            const resultsContent = document.getElementById('results-content');
+            
+            // Score each nation based on security and power
+            const nationScores = gameState.nations.map(nation => {
+                return {
+                    id: nation.id,
+                    name: nation.name,
+                    isPlayer: nation.isPlayer,
+                    score: (nation.securityLevel * 0.6) + (nation.military * 0.2) + (nation.economic * 0.1) + (nation.diplomatic * 0.1)
+                };
+            }).sort((a, b) => b.score - a.score);
+            
+            // Calculate player rank
+            const playerRank = nationScores.findIndex(n => n.isPlayer) + 1;
+            
+            let resultsHtml = `
+                <h3>Final World State</h3>
+                <p>After ${gameState.maxTurns} turns of simulation, the international system has reached the following state:</p>
+                
+                <h4>Nation Rankings</h4>
+                <ol>
+            `;
+            
+            nationScores.forEach(nation => {
+                resultsHtml += `<li>${nation.name} ${nation.isPlayer ? '(You)' : ''} - Score: ${Math.round(nation.score)}</li>`;
+            });
+            
+            resultsHtml += `</ol>
+                <h4>Your Performance</h4>
+                <p>Your nation finished in rank ${playerRank} out of ${gameState.nations.length}.</p>
+                
+                <h4>Key Insights</h4>
+                <ul>
+                    <li>Alliance structures ${gameState.alliances.length > 3 ? 'remained stable' : 'were volatile'} throughout the simulation.</li>
+                    <li>${gameState.wars.length > 0 ? `The system experienced ${gameState.wars.length} wars.` : 'The system maintained peace throughout the simulation.'}</li>
+                    <li>${gameState.player.allianceStrategy === 'balancing' ? 'Your balancing strategy focused on countering threats.' : 'Your bandwagoning approach aligned you with powerful nations.'}</li>
+                </ul>
+                
+                <h4>Theoretical Lessons</h4>
+                <ul>
+                    <li>Balance of power requires active management in a multipolar system.</li>
+                    <li>Security dilemmas can escalate tensions even without aggressive intent.</li>
+                    <li>Alliance commitments involve trade-offs between security and autonomy.</li>
+                    <li>Both balancing and bandwagoning strategies have merits depending on the situation.</li>
+                </ul>
+            `;
+            
+            resultsContent.innerHTML = resultsHtml;
+            document.getElementById('results-modal').style.display = 'block';
+        }
+
+        // Event logging
+        function logEvent(message) {
+            const eventLog = document.getElementById('event-log');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.textContent = `Turn ${gameState.turn}: ${message}`;
+            eventLog.prepend(logEntry);
+        }
+
+        // Player actions
+        function formAlliance(nationId, initialStrength) {
+            createAlliance(gameState.player.id, nationId, initialStrength);
+            closeAllianceModal();
+            updateUI();
+        }
+
+        function breakPlayerAlliance(allianceId) {
+            breakAlliance(allianceId);
+            closeBreakAllianceModal();
+            updateUI();
+        }
+
+        function declareWar(targetId) {
+            const target = getNationById(targetId);
+            if (target) {
+                startWar(gameState.player, target);
+                closeWarModal();
+                updateUI();
+            }
+        }
+
+        function increaseMilitary() {
+            gameState.player.military += 10;
+            gameState.player.economic -= 5;
+            if (gameState.player.economic < 10) gameState.player.economic = 10;
+            
+            logEvent("You have increased your military capabilities.");
+            closeActionModal();
+            updateUI();
+        }
+
+        function increaseEconomic() {
+            gameState.player.economic += 10;
+            gameState.player.diplomatic -= 5;
+            if (gameState.player.diplomatic < 10) gameState.player.diplomatic = 10;
+            
+            logEvent("You have focused on economic development.");
+            closeActionModal();
+            updateUI();
+        }
+
+        function increaseDiplomatic() {
+            gameState.player.diplomatic += 10;
+            gameState.player.military -= 5;
+            if (gameState.player.military < 10) gameState.player.military = 10;
+            
+            logEvent("You have invested in diplomatic initiatives.");
+            closeActionModal();
+            updateUI();
+        }
+
+        // Next turn
+        function nextTurn() {
+            // Reset actions taken flag
+            gameState.nations.forEach(nation => {
+                nation.actionTaken = false;
+            });
+            
+            // AI decision making
+            makeAIDecisions();
+            
+            // Resolve any ongoing wars
+            gameState.wars.filter(war => war.ongoing).forEach(war => {
+                // Wars have a chance to resolve each turn
+                if (Math.random() < 0.4) {
+                    resolveWar(war);
+                }
+            });
+            
+            // Chance for war probability to change
+            if (Math.random() < 0.2) {
+                gameState.warProbability = Math.max(0.05, Math.min(0.3, gameState.warProbability + (Math.random() * 0.1 - 0.05)));
+            }
+            
+            // Check for random events
+            const eventTriggered = triggerRandomEvent();
+            
+            // If no event triggered, increment turn immediately
+            if (!eventTriggered) {
+                gameState.turn++;
+                
+                // Check if game is over
+                if (gameState.turn > gameState.maxTurns) {
+                    showResultsModal();
+                } else {
+                    updateUI();
+                }
+            }
+        }
+
+        // Event listeners
+        document.getElementById('start-game').addEventListener('click', () => {
+            document.getElementById('game-container').style.display = 'block';
+            document.getElementsByClassName('instruction-panel')[0].style.display = 'none';
+            initGame();
+        });
+
+        document.getElementById('next-turn').addEventListener('click', nextTurn);
+        document.getElementById('close-alliance-modal').addEventListener('click', closeAllianceModal);
+        document.getElementById('close-action-modal').addEventListener('click', closeActionModal);
+        document.getElementById('close-break-modal').addEventListener('click', closeBreakAllianceModal);
+        document.getElementById('close-war-modal').addEventListener('click', closeWarModal);
+        document.getElementById('increase-military').addEventListener('click', increaseMilitary);
+        document.getElementById('increase-economic').addEventListener('click', increaseEconomic);
+        document.getElementById('increase-diplomatic').addEventListener('click', increaseDiplomatic);
+        document.getElementById('form-alliance').addEventListener('click', openAllianceModal);
+        document.getElementById('break-alliance').addEventListener('click', openBreakAllianceModal);
+        document.getElementById('declare-war').addEventListener('click', openWarModal);
+        document.getElementById('event-action').addEventListener('click', () => {
+            document.getElementById('event-container').style.display = 'none';
+            gameState.currentEvent = null;
+            gameState.turn++;
+            
+            // Check if game is over
+            if (gameState.turn > gameState.maxTurns) {
+                showResultsModal();
+            } else {
+                updateUI();
+            }
+        });
+        document.getElementById('restart-game').addEventListener('click', () => {
+            document.getElementById('results-modal').style.display = 'none';
+            gameState.turn = 1;
+            gameState.alliances = [];
+            gameState.wars = [];
+            gameState.currentEvent = null;
+            initGame();
+        });
+    </script>
+</body>
+</html>
