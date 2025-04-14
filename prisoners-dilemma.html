@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arms Race Prisoner's Dilemma Simulation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 500;
+        }
+        .back-button {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .game-settings {
+            line-height: 1.5;
+        }
+        .game-settings h3 {
+            color: #1f2937;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .setting-group {
+            margin-bottom: 15px;
+        }
+        .setting-group label {
+            font-weight: 500;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-left: 10px;
+        }
+        .radio-group label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+        }
+        .radio-group input {
+            margin-right: 8px;
+        }
+        .state-info {
+            color: #4b5563;
+            font-style: italic;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .simulator-header {
+            font-size: 20px;
+            font-weight: 500;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .war-probability {
+            margin-bottom: 20px;
+        }
+        .war-probability label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+        }
+        .slider {
+            flex-grow: 1;
+            height: 4px;
+            appearance: none;
+            background: #ddd;
+            outline: none;
+            margin: 0 10px;
+        }
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #000;
+            cursor: pointer;
+        }
+        .payoff-matrix {
+            margin-top: 30px;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .payoff-matrix th, .payoff-matrix td {
+            border: 1px solid #eee;
+            padding: 15px;
+            text-align: center;
+        }
+        .payoff-matrix th {
+            background-color: #f5f5f5;
+            font-weight: 500;
+        }
+        .decisions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 20px;
+        }
+        .decision-panel {
+            flex: 1;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .decision-panel h3 {
+            margin-top: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .score {
+            margin-bottom: 15px;
+        }
+        .decision-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #f5f5f5;
+        }
+        .action-button {
+            background-color: #111827;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .action-button:hover {
+            background-color: #1f2937;
+        }
+        .reset-button {
+            background-color: #6b7280;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .reset-button:hover {
+            background-color: #4b5563;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .chart-container {
+            height: 300px;
+            margin-top: 30px;
+        }
+        .chart {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        .chart-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+        }
+        .grid-line {
+            border-right: 1px dashed #ddd;
+            border-bottom: 1px dashed #ddd;
+            grid-column: span 1;
+            grid-row: span 1;
+        }
+        .chart-axis {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .axis-y {
+            position: absolute;
+            right: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+        }
+        .axis-x {
+            position: absolute;
+            bottom: -20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+        }
+        .chart-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        .awaiting {
+            color: #9ca3af;
+            font-style: italic;
+            text-align: right;
+        }
+        .computer-decision {
+            color: #6b7280;
+            font-style: italic;
+            text-align: right;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .state-a-color {
+            background-color: #818cf8;
+        }
+        .state-b-color {
+            background-color: #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="back-button">←</div>
+        <h1>Arms Race Prisoner's Dilemma Simulation</h1>
+    </div>
+
+    <div class="container">
+        <div class="game-settings">
+            <h3>Simulation Settings</h3>
+            
+            <div class="setting-group">
+                <label>Game Mode:</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="game-mode" value="one-off" checked> One-off Game
+                    </label>
+                    <label>
+                        <input type="radio" name="game-mode" value="iterative"> Iterative Game (20 rounds)
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-group">
+                <label>Player Mode:</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="player-mode" value="two-player" checked> Two Players
+                    </label>
+                    <label>
+                        <input type="radio" name="player-mode" value="vs-computer"> Play vs Computer
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 class="simulator-header" id="round-header">Arms Race Simulator: Round 1</h2>
+
+        <div class="war-probability">
+            <label for="war-likelihood">War Probability:</label>
+            <div class="slider-container">
+                <span id="war-likelihood-value">5%</span>
+                <input type="range" id="war-likelihood" min="0" max="100" value="5" class="slider">
+            </div>
+        </div>
+
+        <div class="payoff-table">
+            <h3>Expected Payoffs (State A, State B)</h3>
+            <table class="payoff-matrix">
+                <tr>
+                    <th></th>
+                    <th>State B Arms</th>
+                    <th>State B Cooperates</th>
+                </tr>
+                <tr>
+                    <th>State A Arms</th>
+                    <td id="both-arm">1, 1</td>
+                    <td id="a-arm-b-disarm">5, 0</td>
+                </tr>
+                <tr>
+                    <th>State A Cooperates</th>
+                    <td id="a-disarm-b-arm">0, 5</td>
+                    <td id="both-disarm">3, 3</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="decisions">
+            <div class="decision-panel">
+                <h3>State A Decision</h3>
+                <div class="score">Current Score: <span id="score-a">0</span></div>
+                <div class="decision-buttons">
+                    <button class="decision-button" data-state="A" data-decision="arm">Build Weapons</button>
+                    <button class="decision-button" data-state="A" data-decision="disarm">Cooperate (Disarm)</button>
+                </div>
+                <div id="state-a-decision" class="awaiting">Awaiting Decision</div>
+                <div class="state-info" id="state-a-history"></div>
+            </div>
+
+            <div class="decision-panel">
+                <h3>State B Decision</h3>
+                <div class="score">Current Score: <span id="score-b">0</span></div>
+                <div class="decision-buttons">
+                    <button class="decision-button" data-state="B" data-decision="arm">Build Weapons</button>
+                    <button class="decision-button" data-state="B" data-decision="disarm">Cooperate (Disarm)</button>
+                </div>
+                <div id="state-b-decision" class="awaiting">Awaiting Decision</div>
+                <div class="state-info" id="state-b-history"></div>
+            </div>
+        </div>
+
+        <button id="reveal-results-btn" class="action-button">Reveal Round Results</button>
+    </div>
+
+    <div class="container">
+        <h2>Score History</h2>
+        <div class="chart-container">
+            <div class="chart">
+                <div class="chart-grid" id="chart-grid"></div>
+                <div class="chart-axis">
+                    <div class="axis-y">
+                        <div>100</div>
+                        <div>50</div>
+                        <div>0</div>
+                        <div>-50</div>
+                        <div>-100</div>
+                    </div>
+                    <div class="axis-x" id="axis-x"></div>
+                </div>
+                <canvas id="score-chart" width="900" height="280"></canvas>
+            </div>
+        </div>
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color state-a-color"></div>
+                <div>State A Score</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color state-b-color"></div>
+                <div>State B Score</div>
+            </div>
+        </div>
+        <button id="reset-btn" class="reset-button">Reset Simulation</button>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            currentRound: 1,
+            totalRounds: 20,
+            gameMode: 'one-off',
+            playerMode: 'two-player',
+            scores: {
+                A: 0,
+                B: 0
+            },
+            history: {
+                A: [],
+                B: []
+            },
+            decisionHistory: {
+                A: [],
+                B: []
+            },
+            warLikelihood: 5,
+            currentDecisions: {
+                A: null,
+                B: null
+            },
+            payoffMatrix: {
+                bothArm: { A: 1, B: 1 },     // Mutual defection - both arm (suboptimal)
+                aArmBDisarm: { A: 5, B: 0 },  // Temptation - A exploits B
+                aDisarmBArm: { A: 0, B: 5 },  // Sucker - B exploits A
+                bothDisarm: { A: 3, B: 3 }    // Mutual cooperation - both disarm (optimal)
+            },
+            // Computer player strategies
+            computerStrategy: 'tit-for-tat'
+        };
+        
+        // DOM elements
+        const warLikelihoodSlider = document.getElementById('war-likelihood');
+        const warLikelihoodValue = document.getElementById('war-likelihood-value');
+        const revealResultsBtn = document.getElementById('reveal-results-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const roundHeader = document.getElementById('round-header');
+        const scoreA = document.getElementById('score-a');
+        const scoreB = document.getElementById('score-b');
+        const stateADecision = document.getElementById('state-a-decision');
+        const stateBDecision = document.getElementById('state-b-decision');
+        const stateAHistory = document.getElementById('state-a-history');
+        const stateBHistory = document.getElementById('state-b-history');
+        const scoreChart = document.getElementById('score-chart');
+        const chartGrid = document.getElementById('chart-grid');
+        const axisX = document.getElementById('axis-x');
+        
+        const gameModeRadios = document.querySelectorAll('input[name="game-mode"]');
+        const playerModeRadios = document.querySelectorAll('input[name="player-mode"]');
+        
+        // Computer player strategies
+        function getComputerDecision() {
+            // Different strategies based on game mode
+            if (gameState.computerStrategy === 'selfish') {
+                // In one-off game, computer mostly defects (arms)
+                return Math.random() < 0.8 ? 'arm' : 'disarm';
+            } else if (gameState.computerStrategy === 'tit-for-tat') {
+                // Classic tit-for-tat: Do what opponent did last round
+                if (gameState.decisionHistory.A.length === 0) {
+                    // First move is cooperative
+                    return 'disarm';
+                }
+                // Copy opponent's last move
+                return gameState.decisionHistory.A[gameState.decisionHistory.A.length - 1];
+            } else if (gameState.computerStrategy === 'forgiving-tit-for-tat') {
+                // Like tit-for-tat but occasionally forgives defection
+                if (gameState.decisionHistory.A.length === 0) {
+                    return 'disarm';
+                }
+                const lastMove = gameState.decisionHistory.A[gameState.decisionHistory.A.length - 1];
+                if (lastMove === 'arm') {
+                    // 20% chance to forgive defection
+                    return Math.random() < 0.2 ? 'disarm' : 'arm';
+                }
+                return 'disarm';
+            }
+            
+            // Default to random
+            return Math.random() < 0.5 ? 'arm' : 'disarm';
+        }
+        
+        // Game mode selection
+        function resetSimulation() {
+            // Reset game state
+            gameState.currentRound = 1;
+            gameState.scores.A = 0;
+            gameState.scores.B = 0;
+            gameState.history.A = [];
+            gameState.history.B = [];
+            gameState.decisionHistory.A = [];
+            gameState.decisionHistory.B = [];
+            gameState.currentDecisions.A = null;
+            gameState.currentDecisions.B = null;
+            
+            // Update UI
+            roundHeader.textContent = `Arms Race Simulator: Round ${gameState.currentRound}`;
+            scoreA.textContent = '0';
+            scoreB.textContent = '0';
+            stateADecision.textContent = 'Awaiting Decision';
+            stateADecision.className = 'awaiting';
+            stateBDecision.textContent = 'Awaiting Decision';
+            stateBDecision.className = 'awaiting';
+            stateAHistory.textContent = '';
+            stateBHistory.textContent = '';
+            
+            // Remove any result divs
+            const results = document.querySelectorAll('.result');
+            results.forEach(result => result.remove());
+            
+            // Enable all decision buttons
+            decisionButtons.forEach(btn => {
+                btn.disabled = false;
+            });
+            
+            // Set up player mode (hide/show State B controls)
+            updatePlayerModeUI();
+            
+            // Reset reveal button
+            revealResultsBtn.textContent = 'Reveal Round Results';
+            revealResultsBtn.disabled = false;
+            revealResultsBtn.onclick = revealResults;
+            
+            // Update chart
+            updateChart();
+        }
+        
+        function updatePlayerModeUI() {
+            // If computer opponent mode, hide State B controls
+            if (gameState.playerMode === 'vs-computer') {
+                const stateBButtons = document.querySelectorAll('.decision-button[data-state="B"]');
+                stateBButtons.forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                
+                // Check if elements exist before trying to access them
+                const stateBDecisionButtons = document.querySelector('#state-b .decision-buttons');
+                if (stateBDecisionButtons) {
+                    stateBDecisionButtons.style.display = 'none';
+                }
+                
+                const stateBDecision = document.querySelector('#state-b-decision');
+                if (stateBDecision) {
+                    stateBDecision.textContent = 'Computer will decide';
+                    stateBDecision.className = 'computer-decision';
+                }
+            } else {
+                // Show State B controls in two-player mode
+                const stateBButtons = document.querySelectorAll('.decision-button[data-state="B"]');
+                stateBButtons.forEach(btn => {
+                    btn.style.display = 'block';
+                });
+                
+                // Check if elements exist before trying to access them
+                const stateBDecisionButtons = document.querySelector('#state-b .decision-buttons');
+                if (stateBDecisionButtons) {
+                    stateBDecisionButtons.style.display = 'flex';
+                }
+                
+                const stateBDecision = document.querySelector('#state-b-decision');
+                if (stateBDecision) {
+                    stateBDecision.textContent = 'Awaiting Decision';
+                    stateBDecision.className = 'awaiting';
+                }
+            }
+        }
+        
+        // Game mode selection handlers
+        gameModeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                gameState.gameMode = this.value;
+                
+                if (this.value === 'one-off') {
+                    gameState.totalRounds = 1;
+                } else {
+                    gameState.totalRounds = 20;
+                }
+                
+                // Update AI strategy based on game mode
+                if (gameState.gameMode === 'one-off') {
+                    gameState.computerStrategy = 'selfish';
+                } else {
+                    gameState.computerStrategy = 'tit-for-tat';
+                }
+                
+                resetSimulation();
+            });
+        });
+        
+        // Player mode selection handlers
+        playerModeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                gameState.playerMode = this.value;
+                updatePlayerModeUI();
+                resetSimulation();
+            });
+        });
+        
+        // Setup chart grid
+        function setupChartGrid() {
+            chartGrid.innerHTML = '';
+            for (let i = 0; i < 8 * 19; i++) {
+                const gridLine = document.createElement('div');
+                gridLine.className = 'grid-line';
+                chartGrid.appendChild(gridLine);
+            }
+            
+            axisX.innerHTML = '';
+            for (let i = 1; i <= 20; i++) {
+                const label = document.createElement('div');
+                label.textContent = i;
+                axisX.appendChild(label);
+            }
+        }
+        
+        // Initialize chart
+        setupChartGrid();
+        
+        // Update chart with current scores
+        function updateChart() {
+            const ctx = scoreChart.getContext('2d');
+            ctx.clearRect(0, 0, scoreChart.width, scoreChart.height);
+            
+            // Calculate scaling factors
+            const xScale = scoreChart.width / 20;
+            const yScale = scoreChart.height / 200; // Scale to fit -100 to 100
+            const yOffset = scoreChart.height / 2;
+            
+            // Draw State A line
+            ctx.beginPath();
+            ctx.strokeStyle = '#818cf8';
+            ctx.lineWidth = 2;
+            
+            if (gameState.history.A.length > 0) {
+                ctx.moveTo(xScale * 0, yOffset - (gameState.history.A[0] * yScale));
+                
+                for (let i = 1; i < gameState.history.A.length; i++) {
+                    ctx.lineTo(xScale * i, yOffset - (gameState.history.A[i] * yScale));
+                }
+            }
+            
+            ctx.stroke();
+            
+            // Draw State A points
+            ctx.fillStyle = '#818cf8';
+            for (let i = 0; i < gameState.history.A.length; i++) {
+                ctx.beginPath();
+                ctx.arc(xScale * i, yOffset - (gameState.history.A[i] * yScale), 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Draw State B line
+            ctx.beginPath();
+            ctx.strokeStyle = '#4ade80';
+            ctx.lineWidth = 2;
+            
+            if (gameState.history.B.length > 0) {
+                ctx.moveTo(xScale * 0, yOffset - (gameState.history.B[0] * yScale));
+                
+                for (let i = 1; i < gameState.history.B.length; i++) {
+                    ctx.lineTo(xScale * i, yOffset - (gameState.history.B[i] * yScale));
+                }
+            }
+            
+            ctx.stroke();
+            
+            // Draw State B points
+            ctx.fillStyle = '#4ade80';
+            for (let i = 0; i < gameState.history.B.length; i++) {
+                ctx.beginPath();
+                ctx.arc(xScale * i, yOffset - (gameState.history.B[i] * yScale), 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // War probability slider
+        warLikelihoodSlider.addEventListener('input', function() {
+            gameState.warLikelihood = parseInt(this.value);
+            warLikelihoodValue.textContent = this.value + '%';
+        });
+        
+        // Decision buttons
+        const decisionButtons = document.querySelectorAll('.decision-button');
+        decisionButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const state = this.getAttribute('data-state');
+                const decision = this.getAttribute('data-decision');
+                
+                // Store the decision
+                gameState.currentDecisions[state] = decision;
+                gameState.decisionHistory[state].push(decision);
+                
+                // Update UI to show decision
+                if (state === 'A') {
+                    stateADecision.textContent = decision === 'arm' ? 'Build Weapons' : 'Cooperate (Disarm)';
+                    stateADecision.className = '';
+                } else {
+                    stateBDecision.textContent = decision === 'arm' ? 'Build Weapons' : 'Cooperate (Disarm)';
+                    stateBDecision.className = '';
+                }
+                
+                // Disable buttons for this state
+                const stateButtons = document.querySelectorAll(`.decision-button[data-state="${state}"]`);
+                stateButtons.forEach(btn => {
+                    btn.disabled = true;
+                });
+                
+                // If vs-computer mode and player A has decided, make computer decision for B
+                if (gameState.playerMode === 'vs-computer' && state === 'A') {
+                    const computerDecision = getComputerDecision();
+                    gameState.currentDecisions.B = computerDecision;
+                    gameState.decisionHistory.B.push(computerDecision);
+                    stateBDecision.textContent = computerDecision === 'arm' ? 'Build Weapons' : 'Cooperate (Disarm)';
+                    stateBDecision.className = '';
+                    
+                    // Add a small delay to make it seem like the computer is thinking
+                    setTimeout(() => {
+                        // Enable the reveal button
+                        revealResultsBtn.disabled = false;
+                    }, 500);
+                }
+                
+                // Check if both states have made decisions
+                if (gameState.currentDecisions.A && gameState.currentDecisions.B) {
+                    revealResultsBtn.disabled = false;
+                }
+            });
+        });
+        
+        // Reveal results button
+        revealResultsBtn.addEventListener('click', function() {
+            if (!gameState.currentDecisions.A || !gameState.currentDecisions.B) {
+                return; // Do nothing if decisions aren't made
+            }
+            
+            // Calculate results
+            const decisionA = gameState.currentDecisions.A;
+            const decisionB = gameState.currentDecisions.B;
+            
+            let payoffs = { A: 0, B: 0 };
+            let outcomeText = '';
+            
+            // Determine payoffs based on decisions
+            if (decisionA === 'disarm' && decisionB === 'disarm') {
+                // Both disarm
+                payoffs = gameState.payoffMatrix.bothDisarm;
+                outcomeText = 'Mutual Cooperation';
+            } else if (decisionA === 'disarm' && decisionB === 'arm') {
+                // A disarms, B arms
+                payoffs = gameState.payoffMatrix.aDisarmBArm;
+                
+                // Check if war occurs
+                if (Math.random() * 100 < gameState.warLikelihood) {
+                    outcomeText = 'WAR! State B advantage';
+                    // War has additional costs
+                    payoffs.A -= 2;
+                    payoffs.B -= 1;
+                } else {
+                    outcomeText = 'State B Exploits State A';
+                }
+            } else if (decisionA === 'arm' && decisionB === 'disarm') {
+                // A arms, B disarms
+                payoffs = gameState.payoffMatrix.aArmBDisarm;
+                
+                // Check if war occurs
+                if (Math.random() * 100 < gameState.warLikelihood) {
+                    outcomeText = 'WAR! State A advantage';
+                    // War has additional costs
+                    payoffs.A -= 1;
+                    payoffs.B -= 2;
+                } else {
+                    outcomeText = 'State A Exploits State B';
+                }
+            } else {
+                // Both arm
+                payoffs = gameState.payoffMatrix.bothArm;
+                
+                // Higher chance of war when both arm
+                if (Math.random() * 100 < (gameState.warLikelihood * 1.5)) {
+                    outcomeText = 'WAR! Arms Race';
+                    // War has costs for both sides
+                    payoffs.A -= 1;
+                    payoffs.B -= 1;
+                } else {
+                    outcomeText = 'Arms Race';
+                }
+            }
+            
+            // Update total scores
+            gameState.scores.A += payoffs.A;
+            gameState.scores.B += payoffs.B;
+            
+            // Update history
+            gameState.history.A.push(gameState.scores.A);
+            gameState.history.B.push(gameState.scores.B);
+            
+            // Update UI
+            scoreA.textContent = gameState.scores.A;
+            scoreB.textContent = gameState.scores.B;
+            
+            // Show outcome
+            const resultA = document.createElement('div');
+            resultA.className = 'result';
+            resultA.textContent = `Outcome: ${outcomeText}`;
+            stateADecision.parentNode.appendChild(resultA);
+            
+            // Update chart
+            updateChart();
+            
+            // Prepare for next round
+            gameState.currentRound++;
+            
+            // Check if game is over (one-off mode or reached max rounds)
+            if (gameState.gameMode === 'one-off' || gameState.currentRound > gameState.totalRounds) {
+                revealResultsBtn.textContent = `Simulation Complete`;
+                revealResultsBtn.disabled = true;
+            } else {
+                roundHeader.textContent = `Arms Race Simulator: Round ${gameState.currentRound}`;
+                revealResultsBtn.textContent = `Continue to Round ${gameState.currentRound}`;
+                revealResultsBtn.onclick = nextRound;
+            }
+        });
+        
+        function nextRound() {
+            // Reset current decisions
+            gameState.currentDecisions.A = null;
+            gameState.currentDecisions.B = null;
+            
+            // Update UI
+            stateADecision.textContent = 'Awaiting Decision';
+            stateADecision.className = 'awaiting';
+            stateBDecision.textContent = 'Awaiting Decision';
+            stateBDecision.className = 'awaiting';
+            
+            // Update history display
+            updateHistoryDisplay();
+            
+            // Remove result divs
+            const results = document.querySelectorAll('.result');
+            results.forEach(result => result.remove());
+            
+            // Enable all decision buttons
+            decisionButtons.forEach(btn => {
+                btn.disabled = false;
+            });
+            
+            // Reset reveal button
+            revealResultsBtn.textContent = 'Reveal Round Results';
+            revealResultsBtn.disabled = true;
+            revealResultsBtn.onclick = revealResults;
+        }
+        
+        function updateHistoryDisplay() {
+            // Show history of previous decisions
+            if (gameState.decisionHistory.A.length > 0) {
+                const historyA = gameState.decisionHistory.A.map(decision => 
+                    decision === 'arm' ? 'Armed' : 'Disarmed'
+                );
+                stateAHistory.textContent = `Previous rounds: ${historyA.join(', ')}`;
+            }
+            
+            if (gameState.decisionHistory.B.length > 0) {
+                const historyB = gameState.decisionHistory.B.map(decision => 
+                    decision === 'arm' ? 'Armed' : 'Disarmed'
+                );
+                stateBHistory.textContent = `Previous rounds: ${historyB.join(', ')}`;
+            }
+        }
+        
+        function revealResults() {
+            // This function is replaced when results are shown
+            if (!gameState.currentDecisions.A || !gameState.currentDecisions.B) {
+                return;
+            }
+            
+            // Logic for revealing results is in the click handler above
+            // This is just a placeholder for restoring the button behavior
+        }
+        
+        // Reset button
+        resetBtn.addEventListener('click', resetSimulation);
+        
+        // Initialize
+        updateChart();
+    </script>
+</body>
+</html>
