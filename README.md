@@ -4,5 +4,5 @@ Teaching simulations project, part of the following working paper: Jackson, Chri
 Links to the files:
 * Illustrating the Central Limit Theorem [CLT Demonstration](https://andyphilips.github.io/teaching-simulations/clt-demo.html)
 * Illustrating the role of factions and decision-making during the French Revolution [French Revolution Simulation](https://andyphilips.github.io/teaching-simulations/french-revolution.html)
-* Illustrating the a bill markup session in Congress [Congressional Bill Markup Session]([file:///Users/chrisjackson/Library/CloudStorage/Dropbox/Chris-Andy/ai-classroom-tools/Simulations/final%20html%20simulation%20versions/](https://andyphilips.github.io/teaching-simulations/congressional-markup-simulation(1).html)
+* Illustrating the a bill markup session in Congress [Congressional Bill Markup Session](https://andyphilips.github.io/teaching-simulations/congressional-markup-simulation(1).html)
 * Illustrating the judicial nominee selection process [Judicial Nomination Process](https://andyphilips.github.io/teaching-simulations/judicial-seleciton-process.html)
