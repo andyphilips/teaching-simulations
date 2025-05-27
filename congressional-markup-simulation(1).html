@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Congressional Committee Markup Simulation</title>
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        
+        button {
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        input, select, textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .flex-item {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        /* Specific Components */
+        .committee-member {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            border-left: 5px solid #ddd;
+        }
+        
+        .democrat {
+            border-left-color: #2166ac;
+        }
+        
+        .republican {
+            border-left-color: #b2182b;
+        }
+        
+        .independent {
+            border-left-color: #92c5de;
+        }
+        
+        .member-info {
+            flex-grow: 1;
+        }
+        
+        .member-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .member-party {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        
+        .voting-buttons button {
+            margin-left: 5px;
+            padding: 5px 10px;
+            font-size: 0.85em;
+        }
+        
+        .tab-container {
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            background-color: transparent;
+            color: #7f8c8d;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-button.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .bill-section {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+        
+        .bill-section-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .marked-up {
+            background-color: #f1f8e9;
+            border-left: 3px solid #7cb342;
+        }
+        
+        .amendment {
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f5f5f5;
+        }
+        
+        .amendment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .amendment-type {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .type-add {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .type-modify {
+            background-color: #fff8e1;
+            color: #ffa000;
+        }
+        
+        .type-remove {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .vote-result {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        .vote-passed {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .vote-failed {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .probability-meter {
+            width: 100%;
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .probability-value {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c 0%, #f39c12 50%, #2ecc71 100%);
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        
+        .probability-marker {
+            position: absolute;
+            top: -10px;
+            width: 2px;
+            height: 40px;
+            background-color: black;
+            transform: translateX(-1px);
+            z-index: 2;
+        }
+        
+        .probability-label {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .phase-indicator {
+            display: flex;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .phase-step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+            margin: 0 5px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .phase-step.active {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .phase-step.completed {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .comparison-view {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .comparison-column {
+            flex: 1;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        
+        .diff-add {
+            background-color: #e6ffed;
+            border-left: 3px solid #2ecc71;
+            padding: 3px 5px;
+        }
+        
+        .diff-remove {
+            background-color: #ffeef0;
+            border-left: 3px solid #e74c3c;
+            padding: 3px 5px;
+            text-decoration: line-through;
+        }
+        
+        #notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #3498db;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+            animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+            max-width: 300px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+        
+        .stats-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box {
+            flex: 1;
+            min-width: 150px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #3498db;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            text-transform: uppercase;
+        }
+        
+        .highlight {
+            background-color: yellow;
+            padding: 0 3px;
+        }
+
+        .analysis-point {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-left: 3px solid #3498db;
+            background-color: #f8f9fa;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .flex-container {
+                flex-direction: column;
+            }
+            
+            .comparison-view {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="notification"></div>
+
+    <!-- Setup Phase -->
+    <div id="setupPhase" class="container">
+        <h1>Congressional Committee Markup Simulation</h1>
+        <p>This simulation allows you to experience how bills are marked up in Congressional committees. Set up your simulation parameters below.</p>
+        
+        <div class="flex-container">
+            <div class="flex-item">
+                <h3>Select Bill Topic</h3>
+                <select id="billTopicSelect">
+                    <option value="education">Educational Reform Act</option>
+                    <option value="healthcare">Universal Healthcare Act</option>
+                    <option value="environment">Climate Protection Act</option>
+                    <option value="infrastructure">Infrastructure Investment Act</option>
+                    <option value="taxation">Tax Reform Act</option>
+                    <option value="custom">Custom Bill (Define Your Own)</option>
+                </select>
+                
+                <div id="customBillContainer" style="display: none; margin-top: 15px;">
+                    <h4>Define Your Custom Bill</h4>
+                    <input type="text" id="customBillTitle" placeholder="Bill Title">
+                    <textarea id="customBillDescription" placeholder="Brief description of the bill's purpose"></textarea>
+                </div>
+            </div>
+            
+            <div class="flex-item">
+                <h3>Committee Composition</h3>
+                <p>Set the partisan balance of your committee:</p>
+                
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <label style="min-width: 120px;">Committee Size:</label>
+                    <select id="committeeSizeSelect">
+                        <option value="7">7 Members</option>
+                        <option value="9">9 Members</option>
+                        <option value="11">11 Members</option>
+                        <option value="13">13 Members</option>
+                        <option value="15">15 Members</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <label style="min-width: 120px;">Majority Party:</label>
+                    <select id="majorityPartySelect">
+                        <option value="democrat">Democratic</option>
+                        <option value="republican">Republican</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <label style="min-width: 120px;">Majority Margin:</label>
+                    <select id="majorityMarginSelect">
+                        <option value="narrow">Narrow (1-2 seat advantage)</option>
+                        <option value="moderate" selected>Moderate (3-4 seat advantage)</option>
+                        <option value="substantial">Substantial (5+ seat advantage)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px; text-align: center;">
+            <button id="startSimulationBtn" style="padding: 12px 24px; font-size: 16px;">Start Simulation</button>
+        </div>
+    </div>
+
+    <!-- Main Simulation Interface (initially hidden) -->
+    <div id="simulationContainer" style="display: none;">
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1 id="billTitleDisplay">Bill Title</h1>
+                <button id="resetSimulationBtn">Reset Simulation</button>
+            </div>
+            
+            <div class="phase-indicator">
+                <div class="phase-step active" id="phaseIntroduction">Bill Introduction</div>
+                <div class="phase-step" id="phaseDiscussion">Committee Discussion</div>
+                <div class="phase-step" id="phaseAmendments">Amendment Proposals</div>
+                <div class="phase-step" id="phaseVoting">Voting</div>
+                <div class="phase-step" id="phaseResults">Results</div>
+            </div>
+        </div>
+        
+        <!-- Bill Introduction Phase -->
+        <div id="introductionPhase" class="container">
+            <h2>Bill Introduction</h2>
+            <p id="billDescriptionDisplay">Bill description will appear here.</p>
+            
+            <div id="billSectionsContainer">
+                <!-- Bill sections will be inserted here -->
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-box">
+                    <div class="stat-label">Majority Party</div>
+                    <div class="stat-value" id="majorityPartyDisplay">Democratic</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Committee Size</div>
+                    <div class="stat-value" id="committeeSizeDisplay">15</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Current Probability of Passage</div>
+                    <div class="stat-value" id="baselineProbabilityDisplay">68%</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button id="proceedToDiscussionBtn">Proceed to Committee Discussion</button>
+            </div>
+        </div>
+        
+        <!-- Committee Discussion Phase -->
+        <div id="discussionPhase" class="container" style="display: none;">
+            <h2>Committee Discussion</h2>
+            
+            <div class="flex-container">
+                <div class="flex-item">
+                    <h3>Committee Members</h3>
+                    <div id="committeeListContainer">
+                        <!-- Committee members will be inserted here -->
+                    </div>
+                    
+                    <button id="showCommitteeSentimentsBtn" style="margin-top: 15px;">Show Committee Member Sentiments</button>
+                </div>
+                
+                <div class="flex-item">
+                    <h3>Committee Sentiments</h3>
+                    <div id="committeeSentimentsContainer" style="display: none;">
+                        <p>Based on the initial discussion, here are the general sentiments of committee members toward this bill:</p>
+                        <div id="sentimentsList">
+                            <!-- Committee sentiments will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <div id="discussionSummaryContainer" style="display: none; margin-top: 20px;">
+                        <h3>Discussion Summary</h3>
+                        <div id="discussionSummary"></div>
+                        
+                        <div style="margin-top: 20px;">
+                            <h4>Initial Bill Passage Probability</h4>
+                            <div class="probability-meter">
+                                <div class="probability-value" id="initialProbabilityValue"></div>
+                                <div class="probability-marker" id="initialProbabilityMarker"></div>
+                            </div>
+                            <div class="probability-label" id="initialProbabilityLabel">50%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button id="proceedToAmendmentsBtn" style="display: none;">Proceed to Amendment Proposals</button>
+            </div>
+        </div>
+        
+        <!-- Amendment Proposals Phase -->
+        <div id="amendmentsPhase" class="container" style="display: none;">
+            <h2>Amendment Proposals</h2>
+            
+            <div class="flex-container">
+                <div class="flex-item">
+                    <h3>Propose Amendments</h3>
+                    <p>Select a section to amend and propose changes:</p>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <select id="amendmentSectionSelect">
+                            <!-- Bill sections will be populated here -->
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <select id="amendmentTypeSelect">
+                            <option value="add">Add text (at the end of the section)</option>
+                            <option value="modify">Modify text (replace entire section)</option>
+                            <option value="remove">Remove text (delete entire section)</option>
+                        </select>
+                    </div>
+                    
+                    <div id="amendmentTextContainer">
+                        <p><strong>Original Text:</strong></p>
+                        <div id="amendmentOriginalText" class="bill-section"></div>
+                        
+                        <div id="amendmentProposalContainer" style="margin-top: 15px;">
+                            <p><strong>Proposed Amendment:</strong></p>
+                            <textarea id="amendmentText" placeholder="Enter your amendment text here..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <select id="amendmentSponsorSelect">
+                            <option value="">-- Select Amendment Sponsor --</option>
+                            <!-- Committee members will be populated here -->
+                        </select>
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button id="proposeAmendmentBtn">Propose Amendment</button>
+                    </div>
+                </div>
+                
+                <div class="flex-item">
+                    <h3>Proposed Amendments</h3>
+                    <div id="proposedAmendmentsContainer">
+                        <p id="noAmendmentsNotice">No amendments proposed yet.</p>
+                        <!-- Proposed amendments will be inserted here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button id="proceedToVotingBtn" disabled>Proceed to Voting (Min. 3 Amendments Required)</button>
+            </div>
+        </div>
+        
+        <!-- Voting Phase -->
+        <div id="votingPhase" class="container" style="display: none;">
+            <h2>Committee Votes on Amendments</h2>
+            
+            <div class="flex-container">
+                <div class="flex-item">
+                    <h3>Amendment Voting</h3>
+                    <div id="amendmentVotingContainer">
+                        <!-- Amendment voting will be inserted here -->
+                    </div>
+                </div>
+                
+                <div class="flex-item">
+                    <h3>Current Bill Status</h3>
+                    <div id="currentBillStatusContainer">
+                        <p>As amendments are voted on, the bill text will be updated here.</p>
+                        <div id="currentBillSections">
+                            <!-- Current bill sections will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <h4>Current Bill Passage Probability</h4>
+                        <div class="probability-meter">
+                            <div class="probability-value" id="currentProbabilityValue"></div>
+                            <div class="probability-marker" id="currentProbabilityMarker"></div>
+                        </div>
+                        <div class="probability-label" id="currentProbabilityLabel">50%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button id="finalVoteBtn" disabled>Hold Final Committee Vote</button>
+            </div>
+        </div>
+        
+        <!-- Results Phase -->
+        <div id="resultsPhase" class="container" style="display: none;">
+            <h2>Committee Markup Results</h2>
+            
+            <div id="finalVoteResultContainer" style="margin-bottom: 20px; text-align: center;">
+                <!-- Final vote results will appear here -->
+            </div>
+            
+            <div class="tab-container">
+                <button id="tabComparison" class="tab-button active">Bill Comparison</button>
+                <button id="tabAmendments" class="tab-button">Amendments Summary</button>
+                <button id="tabAnalysis" class="tab-button">Process Analysis</button>
+            </div>
+            
+            <div id="comparisonTab" class="tab-content active">
+                <h3>Original vs. Final Bill Comparison</h3>
+                <div class="comparison-view">
+                    <div class="comparison-column">
+                        <h4>Original Bill</h4>
+                        <div id="originalBillComparisonContainer">
+                            <!-- Original bill content will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="comparison-column">
+                        <h4>Final Marked-Up Bill</h4>
+                        <div id="finalBillComparisonContainer">
+                            <!-- Final bill content will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="amendmentsTab" class="tab-content">
+                <h3>Amendments Summary</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead style="background-color: #f5f5f5;">
+                        <tr>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">ID</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Sponsor</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Type</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Section</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Result</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody id="amendmentsSummaryTable">
+                        <!-- Amendments summary will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="analysisTab" class="tab-content">
+                <h3>Process Analysis</h3>
+                
+                <div class="stats-container">
+                    <div class="stat-box">
+                        <div class="stat-label">Total Amendments</div>
+                        <div class="stat-value" id="totalAmendmentsValue">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Passed Amendments</div>
+                        <div class="stat-value" id="passedAmendmentsValue">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Failed Amendments</div>
+                        <div class="stat-value" id="failedAmendmentsValue">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Success Rate</div>
+                        <div class="stat-value" id="amendmentSuccessRateValue">0%</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h4>Probability of Passage Over Time</h4>
+                    <div style="height: 300px; background-color: #f9f9f9; border-radius: 4px; display: flex; justify-content: center; align-items: center;">
+                        <p style="color: #7f8c8d;">Graph visualization would go here in a full implementation.</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h4>Key Observations</h4>
+                    <div id="keyObservationsContainer">
+                        <!-- Key observations will be inserted here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button id="startNewSimulationBtn">Start New Simulation</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== SIMULATION DATA MODELS =====
+
+        // Bill templates
+        const billTemplates = {
+            education: {
+                title: "Educational Reform Act of 2025",
+                description: "A bill to strengthen the educational system by investing in teacher training, modernizing curriculum standards, and expanding student opportunities.",
+                sections: [
+                    {
+                        title: "Section 1: Purpose",
+                        content: "The purpose of this Act is to improve educational outcomes for all students by modernizing curriculum standards, enhancing teacher training programs, and expanding access to educational resources."
+                    },
+                    {
+                        title: "Section 2: Teacher Development",
+                        content: "Establishes a $2 billion annual fund for teacher professional development programs, focusing on STEM education, digital literacy, and innovative teaching methods."
+                    },
+                    {
+                        title: "Section 3: Curriculum Standards",
+                        content: "Directs the Department of Education to update national curriculum guidelines to include stronger emphasis on critical thinking, digital literacy, and financial education."
+                    },
+                    {
+                        title: "Section 4: Student Resources",
+                        content: "Allocates $5 billion for upgrading school technology, expanding library resources, and ensuring all public schools have adequate internet connectivity and computing devices."
+                    },
+                    {
+                        title: "Section 5: Implementation Timeline",
+                        content: "Provisions of this Act shall be implemented within 18 months of passage, with preliminary reports due to Congress after 12 months."
+                    }
+                ],
+                baseChance: 65
+            },
+            healthcare: {
+                title: "Universal Healthcare Access Act of 2025",
+                description: "A bill to expand healthcare coverage, reduce pharmaceutical costs, and improve access to medical services for all Americans.",
+                sections: [
+                    {
+                        title: "Section 1: Purpose",
+                        content: "The purpose of this Act is to ensure all Americans have access to affordable healthcare services regardless of employment status, pre-existing conditions, or financial means."
+                    },
+                    {
+                        title: "Section 2: Coverage Expansion",
+                        content: "Expands Medicare eligibility to include all citizens and legal residents currently without healthcare coverage, while maintaining existing private insurance options."
+                    },
+                    {
+                        title: "Section 3: Prescription Drug Pricing",
+                        content: "Authorizes the Department of Health and Human Services to negotiate prescription drug prices for Medicare recipients and establishes price caps for essential medications."
+                    },
+                    {
+                        title: "Section 4: Rural Healthcare Access",
+                        content: "Creates incentives for healthcare providers to establish or expand services in underserved rural areas through tax credits and loan forgiveness programs."
+                    },
+                    {
+                        title: "Section 5: Funding Mechanisms",
+                        content: "Establishes a progressive surcharge on annual incomes exceeding $400,000 and adjusts corporate tax provisions to fund expanded healthcare coverage."
+                    }
+                ],
+                baseChance: 45
+            },
+            environment: {
+                title: "Climate Protection Act of 2025",
+                description: "A bill to reduce carbon emissions, incentivize renewable energy development, and establish national climate adaptation strategies.",
+                sections: [
+                    {
+                        title: "Section 1: Purpose",
+                        content: "The purpose of this Act is to address climate change by reducing greenhouse gas emissions, expanding renewable energy production, and developing climate adaptation strategies."
+                    },
+                    {
+                        title: "Section 2: Emissions Reduction",
+                        content: "Establishes a national goal of 50% reduction in greenhouse gas emissions by 2035 and 90% by 2050, relative to 2005 levels."
+                    },
+                    {
+                        title: "Section 3: Renewable Energy Incentives",
+                        content: "Creates tax incentives for renewable energy production and storage, including enhanced credits for solar, wind, geothermal, and advanced battery technologies."
+                    },
+                    {
+                        title: "Section 4: Climate Adaptation",
+                        content: "Requires federal agencies to develop climate adaptation plans and establishes a $10 billion Climate Resilience Fund to support state and local adaptation projects."
+                    },
+                    {
+                        title: "Section 5: Just Transition",
+                        content: "Provides workforce training and economic development assistance for communities historically dependent on fossil fuel industries."
+                    }
+                ],
+                baseChance: 40
+            },
+            infrastructure: {
+                title: "Infrastructure Investment Act of 2025",
+                description: "A bill to rebuild America's infrastructure, create jobs, and enhance economic competitiveness through targeted investments.",
+                sections: [
+                    {
+                        title: "Section 1: Purpose",
+                        content: "The purpose of this Act is to revitalize America's infrastructure by investing in transportation networks, utilities, broadband, and public facilities to enhance economic growth and quality of life."
+                    },
+                    {
+                        title: "Section 2: Transportation",
+                        content: "Allocates $250 billion for highways, bridges, rail, and public transit projects, with priority given to projects that improve safety, reduce congestion, and enhance connectivity."
+                    },
+                    {
+                        title: "Section 3: Utilities and Energy",
+                        content: "Provides $100 billion for upgrading the electrical grid, water systems, and natural gas infrastructure to improve reliability, efficiency, and resilience to natural disasters."
+                    },
+                    {
+                        title: "Section 4: Broadband Expansion",
+                        content: "Invests $80 billion to ensure universal access to high-speed internet, with emphasis on expanding coverage in rural and underserved urban areas."
+                    },
+                    {
+                        title: "Section 5: Job Creation",
+                        content: "Establishes hiring preferences for local workers and requirements for prevailing wages on all federally funded infrastructure projects."
+                    }
+                ],
+                baseChance: 70
+            },
+            taxation: {
+                title: "Tax Reform Act of 2025",
+                description: "A bill to update the tax code, close loopholes, adjust rates, and provide targeted relief for working families and small businesses.",
+                sections: [
+                    {
+                        title: "Section 1: Purpose",
+                        content: "The purpose of this Act is to create a more equitable and efficient tax system that promotes economic growth, reduces complexity, and ensures corporations and high-income individuals pay their fair share."
+                    },
+                    {
+                        title: "Section 2: Individual Tax Rates",
+                        content: "Adjusts individual income tax brackets to reduce rates for taxpayers earning under $100,000 annually and increases rates for incomes above $500,000."
+                    },
+                    {
+                        title: "Section 3: Corporate Taxation",
+                        content: "Sets the corporate tax rate at 28% and introduces a minimum tax of 15% on book income for corporations with annual profits exceeding $100 million."
+                    },
+                    {
+                        title: "Section 4: Tax Expenditures",
+                        content: "Eliminates certain tax exemptions and deductions primarily benefiting high-income taxpayers while expanding the Child Tax Credit and Earned Income Tax Credit."
+                    },
+                    {
+                        title: "Section 5: Enforcement",
+                        content: "Increases funding for the Internal Revenue Service by $8 billion annually to enhance tax compliance, modernize technology, and improve taxpayer services."
+                    }
+                ],
+                baseChance: 55
+            }
+        };
+
+        // Committee member templates with ideological leanings
+        const memberTemplates = {
+            democrat: {
+                progressive: {
+                    prefixes: ["Rep.", "Hon.", "Congresswoman", "Congressman"],
+                    firstNames: ["Alexandria", "Pramila", "Jamaal", "Ayanna", "Ilhan", "Ro", "Cori", "Mark", "Katie", "Andy"],
+                    lastNames: ["Johnson", "Garcia", "Levin", "Pressley", "Omar", "Khanna", "Bush", "Pocan", "Porter", "Kim"],
+                    concerns: {
+                        education: ["wants more funding for public schools", "advocates for student loan forgiveness", "supports free college initiatives"],
+                        healthcare: ["strongly supports universal healthcare", "wants to expand Medicare for all", "advocates for drug price controls"],
+                        environment: ["strongly supports aggressive climate action", "advocates for Green New Deal policies", "wants fossil fuel industry regulations"],
+                        infrastructure: ["emphasizes green infrastructure", "advocates for public transit funding", "supports union labor requirements"],
+                        taxation: ["wants higher taxes on wealthy", "supports closing corporate loopholes", "advocates for wealth tax provisions"]
+                    },
+                    color: "#1a53ff"
+                },
+                moderate: {
+                    prefixes: ["Rep.", "Hon.", "Congresswoman", "Congressman"],
+                    firstNames: ["Abigail", "Jared", "Josh", "Elissa", "Conor", "Elaine", "Colin", "Sharice", "Tom", "Mikie"],
+                    lastNames: ["Spanberger", "Golden", "Gottheimer", "Slotkin", "Lamb", "Luria", "Allred", "Davids", "Malinowski", "Sherrill"],
+                    concerns: {
+                        education: ["supports targeted education reforms", "wants accountability measures", "advocates for community college funding"],
+                        healthcare: ["supports expanding ACA coverage", "concerned about transition costs", "wants gradual healthcare reforms"],
+                        environment: ["supports measured climate action", "concerned about economic impacts", "advocates for market-based solutions"],
+                        infrastructure: ["emphasizes roads and bridges", "wants fiscal responsibility", "supports public-private partnerships"],
+                        taxation: ["supports moderate tax adjustments", "wants targeted corporate reforms", "concerned about economic impacts"]
+                    },
+                    color: "#66a3ff"
+                }
+            },
+            republican: {
+                moderate: {
+                    prefixes: ["Rep.", "Hon.", "Congresswoman", "Congressman"],
+                    firstNames: ["Brian", "John", "Peter", "David", "Maria", "Jeff", "Tom", "Fred", "Susan", "Don"],
+                    lastNames: ["Fitzpatrick", "Katko", "Meijer", "Valadao", "Salazar", "Van Drew", "Reed", "Upton", "Gonzales", "Bacon"],
+                    concerns: {
+                        education: ["supports local control of education", "concerned about federal mandates", "wants fiscal responsibility"],
+                        healthcare: ["concerned about government expansion", "supports targeted reforms", "wants market-based solutions"],
+                        environment: ["supports moderate environmental protection", "concerned about economic impacts", "advocates for innovation incentives"],
+                        infrastructure: ["emphasizes traditional infrastructure", "concerned about deficit impact", "supports public-private partnerships"],
+                        taxation: ["opposes tax increases", "supports targeted tax reforms", "concerned about economic growth"]
+                    },
+                    color: "#ff6666"
+                },
+                conservative: {
+                    prefixes: ["Rep.", "Hon.", "Congresswoman", "Congressman"],
+                    firstNames: ["Jim", "Marjorie", "Lauren", "Matt", "Dan", "Madison", "Louie", "Paul", "Kevin", "Steve"],
+                    lastNames: ["Jordan", "Greene", "Boebert", "Gaetz", "Crenshaw", "Cawthorn", "Gohmert", "Gosar", "McCarthy", "Scalise"],
+                    concerns: {
+                        education: ["strongly opposes federal education mandates", "supports school choice", "concerned about local control"],
+                        healthcare: ["strongly opposes government healthcare expansion", "wants free market solutions", "concerned about costs"],
+                        environment: ["questions climate change policies", "concerned about energy industry impacts", "opposes regulations"],
+                        infrastructure: ["concerned about spending levels", "opposes non-traditional infrastructure", "wants private sector solutions"],
+                        taxation: ["strongly opposes any tax increases", "wants tax cuts", "supports deregulation"]
+                    },
+                    color: "#cc0000"
+                }
+            },
+            independent: {
+                moderate: {
+                    prefixes: ["Rep.", "Hon.", "Congresswoman", "Congressman"],
+                    firstNames: ["Angus", "Bernie", "Lisa", "Susan", "Joe", "Kyrsten", "Jon", "Margaret", "James", "Michael"],
+                    lastNames: ["King", "Sanders", "Murkowski", "Collins", "Manchin", "Sinema", "Tester", "Smith", "Jeffords", "Bloomberg"],
+                    concerns: {
+                        education: ["evaluates education proposals on merit", "concerned about effectiveness", "supports evidence-based reforms"],
+                        healthcare: ["evaluates healthcare proposals pragmatically", "concerned about costs and access", "wants bipartisan solutions"],
+                        environment: ["acknowledges climate concerns", "seeks balanced approach", "supports pragmatic solutions"],
+                        infrastructure: ["evaluates infrastructure needs pragmatically", "concerned about rural areas", "looks for consensus"],
+                        taxation: ["evaluates tax proposals case by case", "concerned about deficit", "looks for balanced approach"]
+                    },
+                    color: "#9370db"
+                }
+            }
+        };
+
+        // ===== SIMULATION STATE =====
+        let simulationState = {
+            bill: null,
+            originalBill: null,
+            committee: [],
+            amendments: [],
+            probability: {
+                initial: 0,
+                current: 0
+            },
+            votingComplete: false,
+            finalVoteResult: null,
+            currentPhase: "introduction"
+        };
+
+        // ===== UTILITY FUNCTIONS =====
+        
+        // Generate a random name from templates
+        function getRandomName(party, ideology) {
+            const template = memberTemplates[party][ideology];
+            const prefix = template.prefixes[Math.floor(Math.random() * template.prefixes.length)];
+            const firstName = template.firstNames[Math.floor(Math.random() * template.firstNames.length)];
+            const lastName = template.lastNames[Math.floor(Math.random() * template.lastNames.length)];
+            return `${prefix} ${firstName} ${lastName}`;
+        }
+        
+        // Get a random concern for a bill topic
+        function getRandomConcern(party, ideology, topic) {
+            const concerns = memberTemplates[party][ideology].concerns[topic];
+            return concerns[Math.floor(Math.random() * concerns.length)];
+        }
+        
+        // Clone an object (deep copy)
+        function cloneObject(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
+        
+        // Show notification
+        function showNotification(message, duration = 3000) {
+            const notificationElement = document.getElementById("notification");
+            notificationElement.textContent = message;
+            notificationElement.style.display = "block";
+            
+            setTimeout(() => {
+                notificationElement.style.display = "none";
+            }, duration);
+        }
+        
+        // Format party name
+        function formatPartyName(party) {
+            if (party === "democrat") return "Democratic";
+            if (party === "republican") return "Republican";
+            return "Independent";
+        }
+        
+        // Format ideology name
+        function formatIdeologyName(ideology) {
+            return ideology.charAt(0).toUpperCase() + ideology.slice(1);
+        }
+        
+        // Calculate probability of bill passage
+        function calculateProbability() {
+            // Start with base probability from bill topic
+            let probability = simulationState.bill.baseChance;
+            
+            // Adjust based on committee composition vs. bill ideology
+            const committeeIdeology = calculateCommitteeIdeology();
+            const billIdeology = getBillIdeology(simulationState.bill.title);
+            
+            // Ideology alignment affects probability
+            probability += (committeeIdeology * billIdeology * 10);
+            
+            // Adjust for passed amendments
+            simulationState.amendments.forEach(amendment => {
+                if (amendment.passed) {
+                    probability += amendment.impact;
+                }
+            });
+            
+            // Clamp to 0-100 range
+            return Math.max(0, Math.min(100, Math.round(probability)));
+        }
+        
+        // Calculate committee's overall ideological leaning (-1 to 1 scale)
+        function calculateCommitteeIdeology() {
+            let ideologyScore = 0;
+            
+            simulationState.committee.forEach(member => {
+                // Progressive Democrats contribute strongly positive
+                if (member.party === "democrat" && member.ideology === "progressive") {
+                    ideologyScore += 1;
+                }
+                // Moderate Democrats contribute slightly positive
+                else if (member.party === "democrat" && member.ideology === "moderate") {
+                    ideologyScore += 0.5;
+                }
+                // Moderate Republicans contribute slightly negative
+                else if (member.party === "republican" && member.ideology === "moderate") {
+                    ideologyScore -= 0.5;
+                }
+                // Conservative Republicans contribute strongly negative
+                else if (member.party === "republican" && member.ideology === "conservative") {
+                    ideologyScore -= 1;
+                }
+                // Independents are neutral
+                else {
+                    ideologyScore += 0;
+                }
+            });
+            
+            // Normalize to -1 to 1 scale
+            return ideologyScore / simulationState.committee.length;
+        }
+        
+        // Get a bill's ideological leaning (-1 to 1 scale)
+        function getBillIdeology(billTitle) {
+            // This is a simplification; in a real simulation we'd analyze bill content
+            if (billTitle.includes("Healthcare")) return 0.8;
+            if (billTitle.includes("Climate")) return 0.9;
+            if (billTitle.includes("Education")) return 0.4;
+            if (billTitle.includes("Infrastructure")) return 0.2;
+            if (billTitle.includes("Tax")) return -0.3;
+            return 0; // Neutral as default
+        }
+        
+        // Check if a member would likely vote for an amendment
+        function memberWouldVoteForAmendment(member, amendment) {
+            // The chair of the committee always votes along party lines
+            if (member.isChair) {
+                return member.party === amendment.sponsor.party;
+            }
+            
+            // Strong party loyalty is a factor
+            const partyLoyalty = Math.random();
+            if (member.party === amendment.sponsor.party && partyLoyalty > 0.3) {
+                return true;
+            }
+            if (member.party !== amendment.sponsor.party && partyLoyalty > 0.7) {
+                return false;
+            }
+            
+            // Ideology match is a factor
+            if (member.ideology === amendment.sponsor.ideology) {
+                return Math.random() > 0.2;
+            } else {
+                return Math.random() > 0.8;
+            }
+        }
+        
+        // Check if a member would vote for the final bill
+        function memberWouldVoteForFinalBill(member) {
+            const billProbability = simulationState.probability.current / 100;
+            
+            // Chair votes along party lines regarding the bill
+            if (member.isChair) {
+                const majorityParty = document.getElementById("majorityPartySelect").value;
+                if (member.party === majorityParty) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            
+            // Ideology factors heavily into voting
+            let ideologyFactor = 0;
+            const billIdeology = getBillIdeology(simulationState.bill.title);
+            
+            if (member.party === "democrat") {
+                if (member.ideology === "progressive") {
+                    ideologyFactor = billIdeology > 0 ? 0.8 : 0.2;
+                } else { // moderate
+                    ideologyFactor = billIdeology > -0.3 ? 0.7 : 0.3;
+                }
+            } else if (member.party === "republican") {
+                if (member.ideology === "conservative") {
+                    ideologyFactor = billIdeology < 0 ? 0.8 : 0.2;
+                } else { // moderate
+                    ideologyFactor = billIdeology < 0.3 ? 0.7 : 0.3;
+                }
+            } else { // independent
+                ideologyFactor = Math.abs(billIdeology) < 0.5 ? 0.7 : 0.4;
+            }
+            
+            // Combine factors
+            const voteThreshold = (ideologyFactor + billProbability) / 2;
+            return Math.random() < voteThreshold;
+        }
+        
+        // Predict amendment impact on bill passage
+        function predictAmendmentImpact(amendment) {
+            let impact = 0;
+            
+            // Sponsor party affects impact
+            if (amendment.sponsor.party === document.getElementById("majorityPartySelect").value) {
+                impact += 2;
+            } else {
+                impact -= 2;
+            }
+            
+            // Amendment type affects impact
+            if (amendment.type === "add") {
+                impact += 1;
+            } else if (amendment.type === "remove") {
+                impact -= 3;
+            }
+            
+            // Add some randomness
+            impact += Math.floor(Math.random() * 5) - 2;
+            
+            return impact;
+        }
+        
+        // Generate key observations about the markup process
+        function generateKeyObservations() {
+            const observations = [];
+            const totalAmendments = simulationState.amendments.length;
+            const passedAmendments = simulationState.amendments.filter(a => a.passed).length;
+            const majorityParty = document.getElementById("majorityPartySelect").value;
+            const billTopic = getBillTopicFromTitle(simulationState.bill.title);
+            
+            // Observation about amendment success rate
+            if (passedAmendments / totalAmendments > 0.7) {
+                observations.push("Most proposed amendments were accepted, suggesting strong committee cohesion or effective negotiation.");
+            } else if (passedAmendments / totalAmendments < 0.3) {
+                observations.push("Most proposed amendments were rejected, indicating significant partisan division or protection of the original bill text.");
+            }
+            
+            // Observation about majority party influence
+            const majorityAmendments = simulationState.amendments.filter(a => a.sponsor.party === majorityParty);
+            const majorityPassed = majorityAmendments.filter(a => a.passed).length;
+            
+            if (majorityPassed / majorityAmendments.length > 0.8) {
+                observations.push(`The ${formatPartyName(majorityParty)} majority successfully shaped the bill with most of their amendments passing.`);
+            }
+            
+            // Observation about bill topic and ideology
+            if (simulationState.probability.current > simulationState.probability.initial + 15) {
+                observations.push(`The markup process significantly increased the bill's chances of passage, indicating successful compromise or alignment with committee priorities.`);
+            } else if (simulationState.probability.current < simulationState.probability.initial - 15) {
+                observations.push(`The markup process decreased the bill's chances of passage, suggesting the committee made changes that reduced its political viability.`);
+            }
+            
+            // Observation about controversial sections
+            const mostAmendedSection = findMostAmendedSection();
+            if (mostAmendedSection) {
+                observations.push(`Section ${mostAmendedSection.section.title.split(":")[0].split(" ")[1]} received the most amendment attempts, indicating it was particularly controversial or important.`);
+            }
+            
+            // Add one more random observation
+            const randomObservations = [
+                "The chair's management of the markup process significantly influenced which amendments received votes.",
+                "Bipartisan amendments had a higher success rate than strictly partisan proposals.",
+                "Several technical amendments were adopted with little controversy, while policy changes faced more resistance.",
+                "Members with more moderate ideologies were pivotal in determining which amendments passed.",
+                "The committee's focus on specific sections revealed their policy priorities."
+            ];
+            
+            observations.push(randomObservations[Math.floor(Math.random() * randomObservations.length)]);
+            
+            return observations;
+        }
+        
+        // Find the most amended section
+        function findMostAmendedSection() {
+            const sectionCounts = {};
+            
+            simulationState.amendments.forEach(amendment => {
+                if (!sectionCounts[amendment.section.title]) {
+                    sectionCounts[amendment.section.title] = 0;
+                }
+                sectionCounts[amendment.section.title]++;
+            });
+            
+            let maxCount = 0;
+            let mostAmendedSection = null;
+            
+            for (const amendment of simulationState.amendments) {
+                if (sectionCounts[amendment.section.title] > maxCount) {
+                    maxCount = sectionCounts[amendment.section.title];
+                    mostAmendedSection = amendment;
+                }
+            }
+            
+            return mostAmendedSection;
+        }
+        
+        // Get bill topic from title
+        function getBillTopicFromTitle(title) {
+            if (title.includes("Education")) return "education";
+            if (title.includes("Healthcare")) return "healthcare";
+            if (title.includes("Climate")) return "environment";
+            if (title.includes("Infrastructure")) return "infrastructure";
+            if (title.includes("Tax")) return "taxation";
+            return "custom";
+        }
+
+        // ===== SIMULATION INITIALIZATION =====
+        
+        // Initialize the simulation with selected parameters
+        function initializeSimulation() {
+            // Get selected bill topic
+            const billTopic = document.getElementById("billTopicSelect").value;
+            
+            if (billTopic === "custom") {
+                // Create custom bill
+                const customTitle = document.getElementById("customBillTitle").value || "Custom Bill";
+                const customDescription = document.getElementById("customBillDescription").value || "A bill to address various issues through legislative action.";
+                
+                simulationState.bill = {
+                    title: customTitle,
+                    description: customDescription,
+                    sections: [
+                        {
+                            title: "Section 1: Purpose",
+                            content: "The purpose of this Act is to address the issues identified by Congress through appropriate legislative action."
+                        },
+                        {
+                            title: "Section 2: Provisions",
+                            content: "This Act establishes new provisions to regulate and provide guidance on the matters addressed herein."
+                        },
+                        {
+                            title: "Section 3: Funding",
+                            content: "There are authorized to be appropriated such sums as may be necessary to carry out the provisions of this Act."
+                        },
+                        {
+                            title: "Section 4: Implementation",
+                            content: "The appropriate federal agencies shall implement the provisions of this Act within 12 months of its enactment."
+                        }
+                    ],
+                    baseChance: 50
+                };
+            } else {
+                // Use template bill
+                simulationState.bill = cloneObject(billTemplates[billTopic]);
+            }
+            
+            // Save original bill for comparison
+            simulationState.originalBill = cloneObject(simulationState.bill);
+            
+            // Get committee parameters
+            const committeeSize = parseInt(document.getElementById("committeeSizeSelect").value);
+            const majorityParty = document.getElementById("majorityPartySelect").value;
+            const minorityParty = majorityParty === "democrat" ? "republican" : "democrat";
+            const majorityMargin = document.getElementById("majorityMarginSelect").value;
+            
+            // Determine party balance based on margin
+            let majorityCount, minorityCount, independentCount;
+            if (majorityMargin === "narrow") {
+                majorityCount = Math.ceil(committeeSize / 2);
+                minorityCount = Math.floor(committeeSize / 2) - 1;
+                independentCount = 1;
+            } else if (majorityMargin === "moderate") {
+                majorityCount = Math.ceil(committeeSize * 0.6);
+                minorityCount = committeeSize - majorityCount;
+                independentCount = 0;
+            } else { // substantial
+                majorityCount = Math.ceil(committeeSize * 0.7);
+                minorityCount = committeeSize - majorityCount;
+                independentCount = 0;
+            }
+            
+            // Create committee members
+            simulationState.committee = [];
+            
+            // Majority members (with ideological distribution)
+            const majorityProgressiveCount = Math.floor(majorityCount * 0.6);
+            const majorityModerateCount = majorityCount - majorityProgressiveCount;
+            
+            for (let i = 0; i < majorityProgressiveCount; i++) {
+                simulationState.committee.push({
+                    id: simulationState.committee.length,
+                    name: getRandomName(majorityParty, "progressive"),
+                    party: majorityParty,
+                    ideology: "progressive",
+                    isChair: i === 0, // First majority member is chair
+                    concern: getRandomConcern(majorityParty, "progressive", billTopic)
+                });
+            }
+            
+            for (let i = 0; i < majorityModerateCount; i++) {
+                simulationState.committee.push({
+                    id: simulationState.committee.length,
+                    name: getRandomName(majorityParty, "moderate"),
+                    party: majorityParty,
+                    ideology: "moderate",
+                    isChair: false,
+                    concern: getRandomConcern(majorityParty, "moderate", billTopic)
+                });
+            }
+            
+            // Minority members (with ideological distribution)
+            const minorityConservativeCount = Math.floor(minorityCount * 0.6);
+            const minorityModerateCount = minorityCount - minorityConservativeCount;
+            
+            for (let i = 0; i < minorityConservativeCount; i++) {
+                simulationState.committee.push({
+                    id: simulationState.committee.length,
+                    name: getRandomName(minorityParty, "conservative"),
+                    party: minorityParty,
+                    ideology: "conservative",
+                    isChair: false,
+                    concern: getRandomConcern(minorityParty, "conservative", billTopic)
+                });
+            }
+            
+            for (let i = 0; i < minorityModerateCount; i++) {
+                simulationState.committee.push({
+                    id: simulationState.committee.length,
+                    name: getRandomName(minorityParty, "moderate"),
+                    party: minorityParty,
+                    ideology: "moderate",
+                    isChair: false,
+                    concern: getRandomConcern(minorityParty, "moderate", billTopic)
+                });
+            }
+            
+            // Independent members (if any)
+            for (let i = 0; i < independentCount; i++) {
+                simulationState.committee.push({
+                    id: simulationState.committee.length,
+                    name: getRandomName("independent", "moderate"),
+                    party: "independent",
+                    ideology: "moderate",
+                    isChair: false,
+                    concern: getRandomConcern("independent", "moderate", billTopic)
+                });
+            }
+            
+            // Initialize probability
+            simulationState.probability.initial = calculateProbability();
+            simulationState.probability.current = simulationState.probability.initial;
+            
+            // Reset other state
+            simulationState.amendments = [];
+            simulationState.votingComplete = false;
+            simulationState.finalVoteResult = null;
+            simulationState.currentPhase = "introduction";
+            
+            // Update UI with initial simulation state
+            updateUI();
+        }
+        
+        // ===== UI RENDERING FUNCTIONS =====
+        
+        // Update the entire UI based on current simulation state
+        function updateUI() {
+            // Bill information
+            document.getElementById("billTitleDisplay").textContent = simulationState.bill.title;
+            document.getElementById("billDescriptionDisplay").textContent = simulationState.bill.description;
+            
+            // Committee stats
+            document.getElementById("majorityPartyDisplay").textContent = formatPartyName(document.getElementById("majorityPartySelect").value);
+            document.getElementById("committeeSizeDisplay").textContent = simulationState.committee.length;
+            document.getElementById("baselineProbabilityDisplay").textContent = `${simulationState.probability.initial}%`;
+            
+            // Render bill sections
+            renderBillSections();
+            
+            // Set up amendment section dropdown
+            const amendmentSectionSelect = document.getElementById("amendmentSectionSelect");
+            amendmentSectionSelect.innerHTML = "";
+            simulationState.bill.sections.forEach((section, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.textContent = section.title;
+                amendmentSectionSelect.appendChild(option);
+            });
+            updateAmendmentForm();
+            
+            // Set up amendment sponsor dropdown
+            const amendmentSponsorSelect = document.getElementById("amendmentSponsorSelect");
+            amendmentSponsorSelect.innerHTML = "<option value=''>-- Select Amendment Sponsor --</option>";
+            simulationState.committee.forEach(member => {
+                const option = document.createElement("option");
+                option.value = member.id;
+                option.textContent = member.name;
+                amendmentSponsorSelect.appendChild(option);
+            });
+            
+            // Render committee list
+            renderCommitteeList();
+        }
+        
+        // Render bill sections
+        function renderBillSections() {
+            const container = document.getElementById("billSectionsContainer");
+            container.innerHTML = "";
+            
+            simulationState.bill.sections.forEach(section => {
+                const sectionElement = document.createElement("div");
+                sectionElement.className = "bill-section";
+                
+                const titleElement = document.createElement("div");
+                titleElement.className = "bill-section-title";
+                titleElement.textContent = section.title;
+                
+                const contentElement = document.createElement("div");
+                contentElement.textContent = section.content;
+                
+                sectionElement.appendChild(titleElement);
+                sectionElement.appendChild(contentElement);
+                container.appendChild(sectionElement);
+            });
+        }
+        
+        // Render committee list
+        function renderCommitteeList() {
+            const container = document.getElementById("committeeListContainer");
+            container.innerHTML = "";
+            
+            simulationState.committee.forEach(member => {
+                const memberElement = document.createElement("div");
+                memberElement.className = `committee-member ${member.party}`;
+                
+                const memberInfo = document.createElement("div");
+                memberInfo.className = "member-info";
+                
+                const nameElement = document.createElement("div");
+                nameElement.className = "member-name";
+                nameElement.textContent = member.name + (member.isChair ? " (Chair)" : "");
+                
+                const partyElement = document.createElement("div");
+                partyElement.className = "member-party";
+                partyElement.textContent = `${formatPartyName(member.party)} - ${formatIdeologyName(member.ideology)}`;
+                
+                memberInfo.appendChild(nameElement);
+                memberInfo.appendChild(partyElement);
+                memberElement.appendChild(memberInfo);
+                container.appendChild(memberElement);
+            });
+        }
+        
+        // Update amendment form based on selected type
+        function updateAmendmentForm() {
+            const amendmentType = document.getElementById("amendmentTypeSelect").value;
+            const textContainer = document.getElementById("amendmentProposalContainer");
+            const amendmentTextArea = document.getElementById("amendmentText");
+            
+            if (amendmentType === "remove") {
+                textContainer.style.display = "none";
+                amendmentTextArea.value = "";
+            } else {
+                textContainer.style.display = "block";
+                
+                // For "modify", pre-fill with original text
+                if (amendmentType === "modify") {
+                    const sectionIndex = document.getElementById("amendmentSectionSelect").value;
+                    amendmentTextArea.value = simulationState.bill.sections[sectionIndex].content;
+                } else {
+                    amendmentTextArea.value = "";
+                }
+            }
+            
+            // Update original text display
+            const sectionIndex = document.getElementById("amendmentSectionSelect").value;
+            const originalTextElement = document.getElementById("amendmentOriginalText");
+            originalTextElement.textContent = simulationState.bill.sections[sectionIndex].content;
+        }
+        
+        // Render committee sentiments
+        function renderCommitteeSentiments() {
+            const container = document.getElementById("sentimentsList");
+            container.innerHTML = "";
+            
+            simulationState.committee.forEach(member => {
+                const sentimentElement = document.createElement("div");
+                sentimentElement.className = "analysis-point";
+                
+                const nameSpan = document.createElement("span");
+                nameSpan.style.fontWeight = "bold";
+                nameSpan.textContent = member.name;
+                
+                const sentiment = document.createTextNode(` ${member.concern}`);
+                
+                sentimentElement.appendChild(nameSpan);
+                sentimentElement.appendChild(sentiment);
+                container.appendChild(sentimentElement);
+            });
+            
+            // Show sentiment container
+            document.getElementById("committeeSentimentsContainer").style.display = "block";
+        }
+        
+        // Show discussion summary
+        function showDiscussionSummary() {
+            const summaryElement = document.getElementById("discussionSummary");
+            const majorityParty = document.getElementById("majorityPartySelect").value;
+            const billTopic = getBillTopicFromTitle(simulationState.bill.title);
+            
+            // Generate summary based on committee composition and bill topic
+            const summaryText = `
+                <p>The committee's discussion revealed several key concerns and perspectives on the ${simulationState.bill.title}.</p>
+                
+                <div class="analysis-point">
+                    <strong>${formatPartyName(majorityParty)} members</strong> generally expressed support for the bill's core provisions, 
+                    though some raised concerns about specific implementation details and funding mechanisms.
+                </div>
+                
+                <div class="analysis-point">
+                    <strong>${formatPartyName(majorityParty === "democrat" ? "republican" : "democrat")} members</strong> questioned aspects of the bill related to 
+                    ${billTopic === "education" ? "federal oversight and mandates" : 
+                      billTopic === "healthcare" ? "coverage requirements and cost projections" : 
+                      billTopic === "environment" ? "economic impacts and regulatory burden" : 
+                      billTopic === "infrastructure" ? "spending priorities and debt implications" : 
+                      "tax implications and economic effects"}.
+                </div>
+                
+                <div class="analysis-point">
+                    The committee chair indicated that amendments would be considered to address concerns while maintaining the bill's core objectives.
+                </div>
+            `;
+            
+            summaryElement.innerHTML = summaryText;
+            document.getElementById("discussionSummaryContainer").style.display = "block";
+            
+            // Update probability display
+            updateProbabilityDisplay(simulationState.probability.initial, "initialProbabilityValue", "initialProbabilityMarker", "initialProbabilityLabel");
+            
+            // Show proceed button
+            document.getElementById("proceedToAmendmentsBtn").style.display = "block";
+        }
+        
+        // Update probability display
+        function updateProbabilityDisplay(value, valueElementId, markerElementId, labelElementId) {
+            document.getElementById(valueElementId).style.width = `${value}%`;
+            document.getElementById(markerElementId).style.left = `${value}%`;
+            document.getElementById(labelElementId).textContent = `${value}%`;
+        }
+        
+        // Add a proposed amendment
+        function addAmendment(sectionIndex, type, text, sponsorId) {
+            const sponsor = simulationState.committee.find(member => member.id === parseInt(sponsorId));
+            const section = simulationState.bill.sections[sectionIndex];
+            
+            const amendment = {
+                id: simulationState.amendments.length + 1,
+                section: section,
+                sectionIndex: sectionIndex,
+                type: type,
+                text: text,
+                sponsor: sponsor,
+                votes: {
+                    yes: 0,
+                    no: 0,
+                    members: {}
+                },
+                passed: null,
+                impact: 0
+            };
+            
+            // Predict impact on bill passage probability
+            amendment.impact = predictAmendmentImpact(amendment);
+            
+            simulationState.amendments.push(amendment);
+            renderAmendments();
+            
+            // Enable voting button if we have at least 3 amendments
+            if (simulationState.amendments.length >= 3) {
+                document.getElementById("proceedToVotingBtn").disabled = false;
+                document.getElementById("proceedToVotingBtn").textContent = "Proceed to Voting";
+            }
+            
+            showNotification("Amendment proposed successfully.");
+        }
+        
+        // Render proposed amendments
+        function renderAmendments() {
+            const container = document.getElementById("proposedAmendmentsContainer");
+            const noAmendmentsNotice = document.getElementById("noAmendmentsNotice");
+            
+            if (container) {
+                // Clear existing amendments
+                container.innerHTML = "";
+                
+                if (noAmendmentsNotice) {
+                    if (simulationState.amendments.length > 0) {
+                        noAmendmentsNotice.style.display = "none";
+                    } else {
+                        noAmendmentsNotice.style.display = "block";
+                    }
+                }
+                
+                // Add each amendment
+                simulationState.amendments.forEach(amendment => {
+                    const amendmentElement = document.createElement("div");
+                    amendmentElement.className = "amendment";
+                    
+                    const headerElement = document.createElement("div");
+                    headerElement.className = "amendment-header";
+                    
+                    const titleElement = document.createElement("div");
+                    titleElement.innerHTML = `<strong>Amendment #${amendment.id}</strong> by ${amendment.sponsor.name}`;
+                    
+                    const typeElement = document.createElement("div");
+                    typeElement.className = `amendment-type type-${amendment.type}`;
+                    typeElement.textContent = amendment.type.toUpperCase();
+                    
+                    headerElement.appendChild(titleElement);
+                    headerElement.appendChild(typeElement);
+                    
+                    const sectionElement = document.createElement("div");
+                    sectionElement.innerHTML = `<strong>Target:</strong> ${amendment.section.title}`;
+                    
+                    let contentElement;
+                    if (amendment.type === "remove") {
+                        contentElement = document.createElement("div");
+                        contentElement.innerHTML = "<strong>Action:</strong> Remove entire section";
+                    } else {
+                        contentElement = document.createElement("div");
+                        contentElement.innerHTML = `<strong>Text:</strong> ${amendment.text}`;
+                    }
+                    
+                    const impactElement = document.createElement("div");
+                    const impactDirection = amendment.impact > 0 ? "Increases" : amendment.impact < 0 ? "Decreases" : "Neutral impact on";
+                    impactElement.innerHTML = `<strong>Projected Impact:</strong> ${impactDirection} probability of passage by ${Math.abs(amendment.impact)} points`;
+                    
+                    amendmentElement.appendChild(headerElement);
+                    amendmentElement.appendChild(sectionElement);
+                    if (amendment.type !== "remove") {
+                        amendmentElement.appendChild(contentElement);
+                    }
+                    amendmentElement.appendChild(impactElement);
+                    
+                    container.appendChild(amendmentElement);
+                });
+            }
+        }
+        
+        // Initialize voting on amendments
+        function initializeVoting() {
+            const container = document.getElementById("amendmentVotingContainer");
+            container.innerHTML = "";
+            
+            simulationState.amendments.forEach(amendment => {
+                const amendmentElement = document.createElement("div");
+                amendmentElement.className = "amendment";
+                amendmentElement.id = `amendment-voting-${amendment.id}`;
+                
+                const headerElement = document.createElement("div");
+                headerElement.className = "amendment-header";
+                
+                const titleElement = document.createElement("div");
+                titleElement.innerHTML = `<strong>Amendment #${amendment.id}</strong> by ${amendment.sponsor.name}`;
+                
+                const typeElement = document.createElement("div");
+                typeElement.className = `amendment-type type-${amendment.type}`;
+                typeElement.textContent = amendment.type.toUpperCase();
+                
+                headerElement.appendChild(titleElement);
+                headerElement.appendChild(typeElement);
+                
+                const sectionElement = document.createElement("div");
+                sectionElement.innerHTML = `<strong>Target:</strong> ${amendment.section.title}`;
+                
+                let contentElement;
+                if (amendment.type === "remove") {
+                    contentElement = document.createElement("div");
+                    contentElement.innerHTML = "<strong>Action:</strong> Remove entire section";
+                } else {
+                    contentElement = document.createElement("div");
+                    contentElement.innerHTML = `<strong>Text:</strong> ${amendment.text}`;
+                }
+                
+                const votingElement = document.createElement("div");
+                votingElement.className = "committee-voting";
+                votingElement.innerHTML = `<h4>Committee Votes</h4>`;
+                
+                const votesContainer = document.createElement("div");
+                votesContainer.className = "votes-container";
+                
+                simulationState.committee.forEach(member => {
+                    const memberVotingElement = document.createElement("div");
+                    memberVotingElement.className = "committee-member-vote";
+                    
+                    const memberInfo = document.createElement("div");
+                    memberInfo.className = "member-info";
+                    memberInfo.innerHTML = `<span class="member-name">${member.name}</span>`;
+                    
+                    const votingButtons = document.createElement("div");
+                    votingButtons.className = "voting-buttons";
+                    
+                    const yesButton = document.createElement("button");
+                    yesButton.className = "yes-button";
+                    yesButton.textContent = "Yea";
+                    yesButton.onclick = () => {
+                        voteOnAmendment(amendment.id, member.id, "yes");
+                        renderAmendmentVoting(amendment.id);
+                    };
+                    
+                    const noButton = document.createElement("button");
+                    noButton.className = "no-button";
+                    noButton.textContent = "Nay";
+                    noButton.onclick = () => {
+                        voteOnAmendment(amendment.id, member.id, "no");
+                        renderAmendmentVoting(amendment.id);
+                    };
+                    
+                    const autoVoteButton = document.createElement("button");
+                    autoVoteButton.className = "auto-vote-button";
+                    autoVoteButton.textContent = "Auto";
+                    autoVoteButton.onclick = () => {
+                        const vote = memberWouldVoteForAmendment(member, amendment) ? "yes" : "no";
+                        voteOnAmendment(amendment.id, member.id, vote);
+                        renderAmendmentVoting(amendment.id);
+                    };
+                    
+                    votingButtons.appendChild(yesButton);
+                    votingButtons.appendChild(noButton);
+                    votingButtons.appendChild(autoVoteButton);
+                    
+                    memberVotingElement.appendChild(memberInfo);
+                    memberVotingElement.appendChild(votingButtons);
+                    votesContainer.appendChild(memberVotingElement);
+                });
+                
+                votingElement.appendChild(votesContainer);
+                
+                const resultElement = document.createElement("div");
+                resultElement.className = "vote-result-container";
+                resultElement.id = `amendment-result-${amendment.id}`;
+                resultElement.style.display = "none";
+                
+                amendmentElement.appendChild(headerElement);
+                amendmentElement.appendChild(sectionElement);
+                if (amendment.type !== "remove") {
+                    amendmentElement.appendChild(contentElement);
+                }
+                amendmentElement.appendChild(votingElement);
+                amendmentElement.appendChild(resultElement);
+                
+                container.appendChild(amendmentElement);
+            });
+            
+            // Initialize current bill status display
+            updateCurrentBillStatus();
+        }
+        
+        // Vote on an amendment
+        function voteOnAmendment(amendmentId, memberId, vote) {
+            const amendment = simulationState.amendments.find(a => a.id === amendmentId);
+            if (!amendment) return;
+            
+            // Record the vote
+            amendment.votes.members[memberId] = vote;
+            
+            // Update vote counts
+            amendment.votes.yes = 0;
+            amendment.votes.no = 0;
+            
+            for (const memberId in amendment.votes.members) {
+                if (amendment.votes.members[memberId] === "yes") {
+                    amendment.votes.yes += 1;
+                } else {
+                    amendment.votes.no += 1;
+                }
+            }
+            
+            // Check if all members have voted
+            if (amendment.votes.yes + amendment.votes.no === simulationState.committee.length) {
+                // Determine if the amendment passed
+                amendment.passed = amendment.votes.yes > amendment.votes.no;
+                
+                // Apply the amendment effect if it passed
+                if (amendment.passed) {
+                    applyAmendment(amendment);
+                    
+                    // Update passage probability
+                    simulationState.probability.current += amendment.impact;
+                    simulationState.probability.current = Math.max(0, Math.min(100, Math.round(simulationState.probability.current)));
+                    
+                    // Update probability display
+                    updateProbabilityDisplay(simulationState.probability.current, "currentProbabilityValue", "currentProbabilityMarker", "currentProbabilityLabel");
+                    
+                    // Update current bill status
+                    updateCurrentBillStatus();
+                }
+                
+                // Show the result
+                showAmendmentResult(amendment);
+                
+                // Check if all amendments have been voted on
+                checkAllAmendmentsVoted();
+            }
+        }
+        
+        // Apply amendment to the bill
+        function applyAmendment(amendment) {
+            if (amendment.type === "add") {
+                // Add text to the end of the section
+                simulationState.bill.sections[amendment.sectionIndex].content += " " + amendment.text;
+            } else if (amendment.type === "modify") {
+                // Replace the entire section content
+                simulationState.bill.sections[amendment.sectionIndex].content = amendment.text;
+            } else if (amendment.type === "remove") {
+                // Mark section as removed (we don't actually remove it to preserve structure)
+                simulationState.bill.sections[amendment.sectionIndex].content = "[This section was removed by Amendment #" + amendment.id + "]";
+            }
+        }
+        
+        // Show amendment voting result
+        function showAmendmentResult(amendment) {
+            const resultElement = document.getElementById(`amendment-result-${amendment.id}`);
+            resultElement.style.display = "block";
+            
+            resultElement.innerHTML = `
+                <div style="margin-top: 15px; padding: 10px; border-radius: 4px; ${amendment.passed ? 'background-color: #e8f5e9; color: #388e3c;' : 'background-color: #ffebee; color: #d32f2f;'}">
+                    <h4>${amendment.passed ? 'AMENDMENT PASSED' : 'AMENDMENT FAILED'}</h4>
+                    <p>Votes: ${amendment.votes.yes} Yea, ${amendment.votes.no} Nay</p>
+                    ${amendment.passed ? `<p>The bill has been updated to reflect this amendment.</p>` : ''}
+                </div>
+            `;
+            
+            // Disable voting buttons for this amendment
+            const votingContainer = document.getElementById(`amendment-voting-${amendment.id}`);
+            const voteButtons = votingContainer.querySelectorAll("button");
+            voteButtons.forEach(button => {
+                button.disabled = true;
+            });
+        }
+        
+        // Render amendment voting status
+        function renderAmendmentVoting(amendmentId) {
+            const amendment = simulationState.amendments.find(a => a.id === amendmentId);
+            if (!amendment) return;
+            
+            // Update the voting display for each member
+            for (const memberId in amendment.votes.members) {
+                const voteElement = document.querySelector(`#amendment-voting-${amendment.id} .committee-member-vote:nth-child(${parseInt(memberId) + 1})`);
+                if (voteElement) {
+                    const vote = amendment.votes.members[memberId];
+                    const buttonContainer = voteElement.querySelector(".voting-buttons");
+                    
+                    // Disable voting buttons
+                    const buttons = buttonContainer.querySelectorAll("button");
+                    buttons.forEach(button => {
+                        button.disabled = true;
+                    });
+                    
+                    // Show vote
+                    const memberInfo = voteElement.querySelector(".member-info");
+                    memberInfo.innerHTML = `
+                        <span class="member-name">${simulationState.committee.find(m => m.id === parseInt(memberId)).name}</span>
+                        <span class="member-vote" style="margin-left: 10px; padding: 2px 6px; border-radius: 3px; ${vote === 'yes' ? 'background-color: #e8f5e9; color: #388e3c;' : 'background-color: #ffebee; color: #d32f2f;'}">
+                            ${vote === 'yes' ? 'YEA' : 'NAY'}
+                        </span>
+                    `;
+                }
+            }
+        }
+        
+        // Check if all amendments have been voted on
+        function checkAllAmendmentsVoted() {
+            const allVoted = simulationState.amendments.every(amendment => 
+                amendment.passed !== null
+            );
+            
+            if (allVoted) {
+                document.getElementById("finalVoteBtn").disabled = false;
+            }
+        }
+        
+        // Update current bill status display
+        function updateCurrentBillStatus() {
+            const container = document.getElementById("currentBillSections");
+            container.innerHTML = "";
+            
+            simulationState.bill.sections.forEach((section, index) => {
+                const sectionElement = document.createElement("div");
+                sectionElement.className = "bill-section";
+                
+                // Check if this section has been amended
+                const amendmentsForSection = simulationState.amendments.filter(a => 
+                    a.passed && a.sectionIndex === index
+                );
+                
+                if (amendmentsForSection.length > 0) {
+                    sectionElement.className += " marked-up";
+                }
+                
+                const titleElement = document.createElement("div");
+                titleElement.className = "bill-section-title";
+                titleElement.textContent = section.title;
+                
+                const contentElement = document.createElement("div");
+                contentElement.textContent = section.content;
+                
+                if (amendmentsForSection.length > 0) {
+                    const amendmentsInfo = document.createElement("div");
+                    amendmentsInfo.style.marginTop = "10px";
+                    amendmentsInfo.style.fontSize = "0.9em";
+                    amendmentsInfo.style.color = "#7cb342";
+                    
+                    const amendmentsList = amendmentsForSection.map(a => `#${a.id}`).join(", ");
+                    amendmentsInfo.textContent = `Modified by amendment(s): ${amendmentsList}`;
+                    
+                    sectionElement.appendChild(titleElement);
+                    sectionElement.appendChild(contentElement);
+                    sectionElement.appendChild(amendmentsInfo);
+                } else {
+                    sectionElement.appendChild(titleElement);
+                    sectionElement.appendChild(contentElement);
+                }
+                
+                container.appendChild(sectionElement);
+            });
+        }
+        
+        // Hold final committee vote
+        function holdFinalVote() {
+            const votesYes = [];
+            const votesNo = [];
+            
+            // Determine each member's vote
+            simulationState.committee.forEach(member => {
+                if (memberWouldVoteForFinalBill(member)) {
+                    votesYes.push(member);
+                } else {
+                    votesNo.push(member);
+                }
+            });
+            
+            // Determine result
+            const passed = votesYes.length > votesNo.length;
+            simulationState.finalVoteResult = {
+                passed: passed,
+                votesYes: votesYes,
+                votesNo: votesNo
+            };
+            
+            // Show results
+            showFinalVoteResults();
+            
+            // Set up comparison tab
+            setupComparisonTab();
+            
+            // Set up amendments summary tab
+            setupAmendmentsSummaryTab();
+            
+            // Set up analysis tab
+            setupAnalysisTab();
+        }
+        
+        // Show final vote results
+        function showFinalVoteResults() {
+            const resultContainer = document.getElementById("finalVoteResultContainer");
+            
+            if (simulationState.finalVoteResult.passed) {
+                resultContainer.innerHTML = `
+                    <div style="padding: 20px; background-color: #e8f5e9; border-radius: 8px; color: #388e3c;">
+                        <h2>BILL REPORTED FAVORABLY</h2>
+                        <p>The bill passed the committee by a vote of ${simulationState.finalVoteResult.votesYes.length} to ${simulationState.finalVoteResult.votesNo.length}.</p>
+                        <p>The bill will now move to the full chamber for consideration.</p>
+                    </div>
+                `;
+            } else {
+                resultContainer.innerHTML = `
+                    <div style="padding: 20px; background-color: #ffebee; border-radius: 8px; color: #d32f2f;">
+                        <h2>BILL REPORTED UNFAVORABLY</h2>
+                        <p>The bill failed to pass the committee by a vote of ${simulationState.finalVoteResult.votesYes.length} to ${simulationState.finalVoteResult.votesNo.length}.</p>
+                        <p>The bill is unlikely to advance further in the legislative process.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Set up bill comparison tab
+        function setupComparisonTab() {
+            const originalContainer = document.getElementById("originalBillComparisonContainer");
+            const finalContainer = document.getElementById("finalBillComparisonContainer");
+            
+            originalContainer.innerHTML = "";
+            finalContainer.innerHTML = "";
+            
+            // Render original bill
+            simulationState.originalBill.sections.forEach(section => {
+                const sectionElement = document.createElement("div");
+                sectionElement.className = "bill-section";
+                
+                const titleElement = document.createElement("div");
+                titleElement.className = "bill-section-title";
+                titleElement.textContent = section.title;
+                
+                const contentElement = document.createElement("div");
+                contentElement.textContent = section.content;
+                
+                sectionElement.appendChild(titleElement);
+                sectionElement.appendChild(contentElement);
+                originalContainer.appendChild(sectionElement);
+            });
+            
+            // Render final bill
+            simulationState.bill.sections.forEach((section, index) => {
+                const sectionElement = document.createElement("div");
+                sectionElement.className = "bill-section";
+                
+                // Check if this section was amended
+                const originalContent = simulationState.originalBill.sections[index].content;
+                const finalContent = section.content;
+                const wasAmended = originalContent !== finalContent;
+                
+                if (wasAmended) {
+                    sectionElement.className += " marked-up";
+                }
+                
+                const titleElement = document.createElement("div");
+                titleElement.className = "bill-section-title";
+                titleElement.textContent = section.title;
+                
+                const contentElement = document.createElement("div");
+                contentElement.textContent = section.content;
+                
+                sectionElement.appendChild(titleElement);
+                sectionElement.appendChild(contentElement);
+                
+                if (wasAmended) {
+                    const changesInfo = document.createElement("div");
+                    changesInfo.style.marginTop = "10px";
+                    changesInfo.style.fontSize = "0.9em";
+                    changesInfo.style.color = "#2196f3";
+                    changesInfo.textContent = "This section was amended during markup.";
+                    
+                    sectionElement.appendChild(changesInfo);
+                }
+                
+                finalContainer.appendChild(sectionElement);
+            });
+        }
+        
+        // Set up amendments summary tab
+        function setupAmendmentsSummaryTab() {
+            const tableBody = document.getElementById("amendmentsSummaryTable");
+            tableBody.innerHTML = "";
+            
+            simulationState.amendments.forEach(amendment => {
+                const row = document.createElement("tr");
+                
+                const idCell = document.createElement("td");
+                idCell.style.padding = "10px";
+                idCell.style.borderBottom = "1px solid #ddd";
+                idCell.textContent = `#${amendment.id}`;
+                
+                const sponsorCell = document.createElement("td");
+                sponsorCell.style.padding = "10px";
+                sponsorCell.style.borderBottom = "1px solid #ddd";
+                sponsorCell.innerHTML = `${amendment.sponsor.name}<br><span style="font-size: 0.8em; color: #7f8c8d;">${formatPartyName(amendment.sponsor.party)}</span>`;
+                
+                const typeCell = document.createElement("td");
+                typeCell.style.padding = "10px";
+                typeCell.style.borderBottom = "1px solid #ddd";
+                typeCell.innerHTML = `<span class="amendment-type type-${amendment.type}" style="font-size: 0.8em;">${amendment.type.toUpperCase()}</span>`;
+                
+                const sectionCell = document.createElement("td");
+                sectionCell.style.padding = "10px";
+                sectionCell.style.borderBottom = "1px solid #ddd";
+                sectionCell.textContent = amendment.section.title.split(":")[0];
+                
+                const resultCell = document.createElement("td");
+                resultCell.style.padding = "10px";
+                resultCell.style.borderBottom = "1px solid #ddd";
+                resultCell.innerHTML = amendment.passed ? 
+                    `<span class="vote-result vote-passed">Passed (${amendment.votes.yes}-${amendment.votes.no})</span>` : 
+                    `<span class="vote-result vote-failed">Failed (${amendment.votes.yes}-${amendment.votes.no})</span>`;
+                
+                const impactCell = document.createElement("td");
+                impactCell.style.padding = "10px";
+                impactCell.style.borderBottom = "1px solid #ddd";
+                
+                if (amendment.passed) {
+                    const impactDirection = amendment.impact > 0 ? "+" : amendment.impact < 0 ? "" : "±";
+                    impactCell.textContent = `${impactDirection}${amendment.impact} points`;
+                    impactCell.style.color = amendment.impact > 0 ? "#388e3c" : amendment.impact < 0 ? "#d32f2f" : "#7f8c8d";
+                } else {
+                    impactCell.textContent = "No impact";
+                    impactCell.style.color = "#7f8c8d";
+                }
+                
+                row.appendChild(idCell);
+                row.appendChild(sponsorCell);
+                row.appendChild(typeCell);
+                row.appendChild(sectionCell);
+                row.appendChild(resultCell);
+                row.appendChild(impactCell);
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Set up analysis tab
+        function setupAnalysisTab() {
+            // Update stats
+            const totalAmendments = simulationState.amendments.length;
+            const passedAmendments = simulationState.amendments.filter(a => a.passed).length;
+            const failedAmendments = totalAmendments - passedAmendments;
+            const successRate = totalAmendments > 0 ? Math.round((passedAmendments / totalAmendments) * 100) : 0;
+            
+            document.getElementById("totalAmendmentsValue").textContent = totalAmendments;
+            document.getElementById("passedAmendmentsValue").textContent = passedAmendments;
+            document.getElementById("failedAmendmentsValue").textContent = failedAmendments;
+            document.getElementById("amendmentSuccessRateValue").textContent = `${successRate}%`;
+            
+            // Generate key observations
+            const observationsContainer = document.getElementById("keyObservationsContainer");
+            observationsContainer.innerHTML = "";
+            
+            const observations = generateKeyObservations();
+            
+            observations.forEach(observation => {
+                const observationElement = document.createElement("div");
+                observationElement.className = "analysis-point";
+                observationElement.textContent = observation;
+                observationsContainer.appendChild(observationElement);
+            });
+        }
+        
+        // Handle tab switching
+        function setupTabs() {
+            const tabButtons = document.querySelectorAll(".tab-button");
+            const tabContents = document.querySelectorAll(".tab-content");
+            
+            tabButtons.forEach(button => {
+                button.addEventListener("click", () => {
+                    // Remove active class from all buttons and contents
+                    tabButtons.forEach(btn => btn.classList.remove("active"));
+                    tabContents.forEach(content => content.classList.remove("active"));
+                    
+                    // Add active class to clicked button and corresponding content
+                    button.classList.add("active");
+                    const tabId = button.id.replace("tab", "").toLowerCase() + "Tab";
+                    document.getElementById(tabId).classList.add("active");
+                });
+            });
+        }
+        
+        // Update phase indicators
+        function updatePhaseIndicators(currentPhase) {
+            // Remove active and completed classes from all phases
+            const phases = ["phaseIntroduction", "phaseDiscussion", "phaseAmendments", "phaseVoting", "phaseResults"];
+            phases.forEach(phase => {
+                document.getElementById(phase).classList.remove("active");
+                document.getElementById(phase).classList.remove("completed");
+            });
+            
+            // Set active and completed classes based on current phase
+            let activeIndex = 0;
+            switch (currentPhase) {
+                case "introduction":
+                    activeIndex = 0;
+                    break;
+                case "discussion":
+                    activeIndex = 1;
+                    break;
+                case "amendments":
+                    activeIndex = 2;
+                    break;
+                case "voting":
+                    activeIndex = 3;
+                    break;
+                case "results":
+                    activeIndex = 4;
+                    break;
+            }
+            
+            // Set classes
+            for (let i = 0; i < phases.length; i++) {
+                if (i < activeIndex) {
+                    document.getElementById(phases[i]).classList.add("completed");
+                } else if (i === activeIndex) {
+                    document.getElementById(phases[i]).classList.add("active");
+                }
+            }
+        }
+        
+        // ===== EVENT HANDLERS =====
+        
+        // Bill topic select change
+        document.getElementById("billTopicSelect").addEventListener("change", function() {
+            const customBillContainer = document.getElementById("customBillContainer");
+            if (this.value === "custom") {
+                customBillContainer.style.display = "block";
+            } else {
+                customBillContainer.style.display = "none";
+            }
+        });
+        
+        // Start simulation button
+        document.getElementById("startSimulationBtn").addEventListener("click", function() {
+            // Initialize simulation with selected parameters
+            initializeSimulation();
+            
+            // Hide setup phase, show simulation
+            document.getElementById("setupPhase").style.display = "none";
+            document.getElementById("simulationContainer").style.display = "block";
+            document.getElementById("introductionPhase").style.display = "block";
+            
+            // Update phase indicators
+            updatePhaseIndicators("introduction");
+            
+            showNotification("Simulation started!");
+        });
+        
+        // Reset simulation button
+        document.getElementById("resetSimulationBtn").addEventListener("click", function() {
+            // Hide simulation, show setup
+            document.getElementById("simulationContainer").style.display = "none";
+            document.getElementById("setupPhase").style.display = "block";
+            
+            // Reset phase displays
+            document.getElementById("introductionPhase").style.display = "block";
+            document.getElementById("discussionPhase").style.display = "none";
+            document.getElementById("amendmentsPhase").style.display = "none";
+            document.getElementById("votingPhase").style.display = "none";
+            document.getElementById("resultsPhase").style.display = "none";
+            
+            showNotification("Simulation reset!");
+        });
+        
+        // Proceed to discussion button
+        document.getElementById("proceedToDiscussionBtn").addEventListener("click", function() {
+            document.getElementById("introductionPhase").style.display = "none";
+            document.getElementById("discussionPhase").style.display = "block";
+            
+            simulationState.currentPhase = "discussion";
+            updatePhaseIndicators("discussion");
+            
+            showNotification("Committee discussion phase started!");
+        });
+        
+        // Show committee sentiments button
+        document.getElementById("showCommitteeSentimentsBtn").addEventListener("click", function() {
+            renderCommitteeSentiments();
+            this.style.display = "none";
+            
+            // After a delay, show discussion summary
+            setTimeout(() => {
+                showDiscussionSummary();
+            }, 1000);
+        });
+        
+        // Proceed to amendments button
+        document.getElementById("proceedToAmendmentsBtn").addEventListener("click", function() {
+            document.getElementById("discussionPhase").style.display = "none";
+            document.getElementById("amendmentsPhase").style.display = "block";
+            
+            simulationState.currentPhase = "amendments";
+            updatePhaseIndicators("amendments");
+            
+            showNotification("Amendment proposal phase started!");
+        });
+        
+        // Amendment section select change
+        document.getElementById("amendmentSectionSelect").addEventListener("change", function() {
+            updateAmendmentForm();
+        });
+        
+        // Amendment type select change
+        document.getElementById("amendmentTypeSelect").addEventListener("change", function() {
+            updateAmendmentForm();
+        });
+        
+        // Propose amendment button
+        document.getElementById("proposeAmendmentBtn").addEventListener("click", function() {
+            const sectionIndex = document.getElementById("amendmentSectionSelect").value;
+            const type = document.getElementById("amendmentTypeSelect").value;
+            const text = document.getElementById("amendmentText").value;
+            const sponsorId = document.getElementById("amendmentSponsorSelect").value;
+            
+            // Validate inputs
+            if (!sponsorId) {
+                showNotification("Please select an amendment sponsor.");
+                return;
+            }
+            
+            if (type !== "remove" && !text.trim()) {
+                showNotification("Please enter amendment text.");
+                return;
+            }
+            
+            // Add the amendment
+            addAmendment(sectionIndex, type, text, sponsorId);
+            
+            // Reset form
+            document.getElementById("amendmentText").value = "";
+            document.getElementById("amendmentSponsorSelect").value = "";
+        });
+        
+        // Proceed to voting button
+        document.getElementById("proceedToVotingBtn").addEventListener("click", function() {
+            document.getElementById("amendmentsPhase").style.display = "none";
+            document.getElementById("votingPhase").style.display = "block";
+            
+            simulationState.currentPhase = "voting";
+            updatePhaseIndicators("voting");
+            
+            // Initialize voting interface
+            initializeVoting();
+            
+            showNotification("Voting phase started!");
+        });
+        
+        // Final vote button
+        document.getElementById("finalVoteBtn").addEventListener("click", function() {
+            holdFinalVote();
+            
+            document.getElementById("votingPhase").style.display = "none";
+            document.getElementById("resultsPhase").style.display = "block";
+            
+            simulationState.currentPhase = "results";
+            updatePhaseIndicators("results");
+            
+            // Set up tabs
+            setupTabs();
+            
+            showNotification("Final vote complete!");
+        });
+        
+        // Start new simulation button
+        document.getElementById("startNewSimulationBtn").addEventListener("click", function() {
+            // Hide simulation, show setup
+            document.getElementById("simulationContainer").style.display = "none";
+            document.getElementById("setupPhase").style.display = "block";
+            
+            // Reset phase displays
+            document.getElementById("introductionPhase").style.display = "block";
+            document.getElementById("discussionPhase").style.display = "none";
+            document.getElementById("amendmentsPhase").style.display = "none";
+            document.getElementById("votingPhase").style.display = "none";
+            document.getElementById("resultsPhase").style.display = "none";
+            
+            showNotification("Ready to start a new simulation!");
+        });
+
+        // Initialize tab functionality
+        setupTabs();
+    </script>
+</body>
+</html>

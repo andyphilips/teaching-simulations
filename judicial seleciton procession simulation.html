@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supreme Court Nomination Strategy Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
+            opacity: 0.3;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+            padding: 30px;
+            min-height: 600px;
+        }
+
+        .main-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-card h3 {
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .status-card .value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .senate-tracker {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .senate-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 4px;
+            margin: 15px 0;
+        }
+
+        .senator {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .senator.republican { background: #ff6b6b; border-color: #e55656; }
+        .senator.democrat { background: #4ecdc4; border-color: #45b7b8; }
+        .senator.support { box-shadow: 0 0 10px #4CAF50; border-color: #4CAF50; }
+        .senator.oppose { box-shadow: 0 0 10px #f44336; border-color: #f44336; }
+        .senator.undecided { animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .actions-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .action-card {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-card h3 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .action-card p {
+            font-size: 0.9em;
+            line-height: 1.4;
+            opacity: 0.9;
+        }
+
+        .cost {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        .crisis-panel {
+            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .news-feed {
+            background: #2d3436;
+            color: #ddd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .news-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #636e72;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .turn-controls {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .next-turn-btn {
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .next-turn-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .game-over-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .hearing-panel {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .hearing-panel h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .questioning-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .question-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .question-card:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .question-card h4 {
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .question-card p {
+            font-size: 0.9em;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .nominee-response {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #00cec9;
+        }
+
+        .response-impact {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .impact-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .impact-positive { border-left: 4px solid #00b894; }
+        .impact-negative { border-left: 4px solid #e17055; }
+        .impact-neutral { border-left: 4px solid #74b9ff; }
+
+        .theory-explanation {
+            background: #f1f2f6;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #3742fa;
+        }
+
+        .theory-explanation h4 {
+            color: #3742fa;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .game-board {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .status-panel {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .actions-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>Supreme Court Nomination Strategy</h1>
+            <p>Navigate the complex world of political capital, partisan dynamics, and strategic decision-making</p>
+        </div>
+
+        <div class="game-board">
+            <div class="main-panel">
+                <div class="status-panel">
+                    <div class="status-card">
+                        <h3>Political Capital</h3>
+                        <div class="value" id="political-capital">100</div>
+                    </div>
+                    <div class="status-card">
+                        <h3>Public Approval</h3>
+                        <div class="value" id="approval">65%</div>
+                    </div>
+                    <div class="status-card">
+                        <h3>Media Sentiment</h3>
+                        <div class="value" id="media">Neutral</div>
+                    </div>
+                    <div class="status-card">
+                        <h3>Turn</h3>
+                        <div class="value" id="current-turn">1/10</div>
+                    </div>
+                </div>
+
+                <div class="senate-tracker">
+                    <h3>Senate Vote Tracker (Need 50 votes)</h3>
+                    <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                        <span style="color: #4CAF50;">Support: <strong id="support-count">45</strong></span>
+                        <span style="color: #ff9800;">Undecided: <strong id="undecided-count">10</strong></span>
+                        <span style="color: #f44336;">Oppose: <strong id="oppose-count">45</strong></span>
+                    </div>
+                    <div class="senate-grid" id="senate-grid"></div>
+                </div>
+
+                <div class="actions-panel">
+                    <button class="action-card" onclick="takeAction('lobby')">
+                        <h3>Lobby Senators</h3>
+                        <p>Direct outreach to undecided senators through personal meetings and negotiations</p>
+                        <div class="cost">Cost: 20 Political Capital</div>
+                    </button>
+                    <button class="action-card" onclick="takeAction('media')">
+                        <h3>Media Campaign</h3>
+                        <p>Launch public relations offensive to build support and pressure senators</p>
+                        <div class="cost">Cost: 15 Political Capital</div>
+                    </button>
+                    <button class="action-card" onclick="takeAction('hearing')" id="hearing-btn">
+                        <h3>Senate Hearing</h3>
+                        <p>Conduct Judiciary Committee hearing with strategic questioning approach</p>
+                        <div class="cost" id="hearing-cost">Cost: 25 Political Capital</div>
+                    </button>
+                    <button class="action-card" onclick="takeAction('concessions')">
+                        <h3>Make Concessions</h3>
+                        <p>Offer policy compromises to win over moderate opposition</p>
+                        <div class="cost">Cost: 25 Political Capital</div>
+                    </button>
+                    <button class="action-card" onclick="takeAction('grassroots')">
+                        <h3>Grassroots Mobilization</h3>
+                        <p>Activate base supporters to pressure their senators</p>
+                        <div class="cost">Cost: 10 Political Capital</div>
+                    </button>
+                </div>
+
+                <div id="hearing-container"></div>
+
+                <div id="crisis-container"></div>
+
+                <div class="theory-explanation">
+                    <h4>Political Science Concepts in Play:</h4>
+                    <p><strong>Confirmation Hearings:</strong> Strategic questioning can reveal nominee positions and influence senator decisions. Different approaches carry different risks and rewards.</p>
+                    <p><strong>Senator Archetypes:</strong> Moderates (gold border) and Institutionalists (purple border) weigh different factors than partisan ideologues in hearing responses.</p>
+                    <p><strong>Judicial Philosophy Impact:</strong> How nominees explain their judicial philosophy during hearings significantly affects confirmation prospects.</p>
+                    <p><strong>Political Capital Allocation:</strong> Limited hearings and resources require strategic decisions about when and how to use confirmation opportunities.</p>
+                </div>
+
+                <div class="turn-controls">
+                    <button class="next-turn-btn" onclick="nextTurn()">End Turn</button>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="senate-tracker">
+                    <h3>Nominee Profile</h3>
+                    <div id="nominee-info" style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <!-- Nominee information will be inserted here -->
+                    </div>
+                </div>
+
+                <div class="senate-tracker">
+                    <h3>Party Breakdown</h3>
+                    <div style="margin: 15px 0;">
+                        <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                            <span style="color: #ff6b6b;">Republicans:</span>
+                            <strong>52</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin: 5px 0;">
+                            <span style="color: #4ecdc4;">Democrats:</span>
+                            <strong>48</strong>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 0.9em;">
+                        <p><span style="border: 2px solid #ffd700; border-radius: 50%; display: inline-block; width: 12px; height: 12px; margin-right: 5px;"></span>Moderates</p>
+                        <p><span style="border: 2px solid #9b59b6; border-radius: 50%; display: inline-block; width: 12px; height: 12px; margin-right: 5px;"></span>Institutionalists</p>
+                    </div>
+                </div>
+
+                <div class="news-feed">
+                    <h3 style="color: #74b9ff; margin-bottom: 15px;">News Feed</h3>
+                    <div id="news-container">
+                        <div class="news-item">President nominates distinguished federal judge to Supreme Court...</div>
+                        <div class="news-item">Opposition party signals unified resistance to nomination...</div>
+                        <div class="news-item">Legal scholars debate nominee's judicial philosophy...</div>
+                    </div>
+                </div>
+
+                <div class="theory-explanation" style="margin-top: 20px;">
+                    <h4>Strategic Considerations:</h4>
+                    <p id="strategy-tip">Early turns are crucial for building momentum. Focus on converting undecided senators before opposition hardens.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            turn: 1,
+            maxTurns: 10,
+            politicalCapital: 100,
+            approval: 65,
+            media: 'Neutral',
+            senators: [],
+            supportCount: 45,
+            undecidedCount: 10,
+            opposeCount: 45,
+            gameOver: false,
+            crisisActive: false,
+            hearingActive: false,
+            hearingsHeld: 0,
+            maxHearings: 3
+        };
+
+        // Nominee profiles with different characteristics
+        const nomineeProfiles = {
+            conservative: {
+                name: "Judge Sarah Mitchell",
+                philosophy: "Originalist/Textualist",
+                qualifications: 85,
+                partisanAlignment: { republican: 0.8, democrat: 0.1 },
+                description: "Federal appellate judge with strong conservative judicial philosophy"
+            },
+            moderate: {
+                name: "Judge Michael Chen",
+                philosophy: "Pragmatic Moderate", 
+                qualifications: 92,
+                partisanAlignment: { republican: 0.4, democrat: 0.6 },
+                description: "Highly qualified centrist with bipartisan appeal"
+            },
+            liberal: {
+                name: "Judge Elena Rodriguez",
+                philosophy: "Living Constitution",
+                qualifications: 88,
+                partisanAlignment: { republican: 0.2, democrat: 0.9 },
+                description: "Progressive jurist with extensive civil rights background"
+            }
+        };
+
+        // Initialize senators with individual characteristics
+        function initializeSenators() {
+            gameState.senators = [];
+            
+            // Select random nominee for this game
+            const profiles = Object.keys(nomineeProfiles);
+            gameState.nominee = nomineeProfiles[profiles[Math.floor(Math.random() * profiles.length)]];
+            
+            // 52 Republicans with individual traits
+            for (let i = 0; i < 52; i++) {
+                const senator = createSenator('republican', i);
+                gameState.senators.push(senator);
+            }
+            
+            // 48 Democrats with individual traits
+            for (let i = 0; i < 48; i++) {
+                const senator = createSenator('democrat', i);
+                gameState.senators.push(senator);
+            }
+            
+            updateVoteCounts();
+            updateNomineeDisplay();
+        }
+
+        function createSenator(party, index) {
+            // Senator archetypes with different priorities
+            const archetypes = {
+                partisan: { qualificationWeight: 0.2, partyWeight: 0.8, name: "Partisan" },
+                moderate: { qualificationWeight: 0.6, partyWeight: 0.4, name: "Moderate" },
+                institutionalist: { qualificationWeight: 0.8, partyWeight: 0.2, name: "Institutionalist" },
+                ideological: { qualificationWeight: 0.3, partyWeight: 0.7, name: "Ideological" }
+            };
+
+            // Assign archetype based on party and position
+            let archetype;
+            if (party === 'republican') {
+                if (index < 35) archetype = archetypes.partisan;
+                else if (index < 45) archetype = archetypes.ideological;
+                else if (index < 50) archetype = archetypes.moderate;
+                else archetype = archetypes.institutionalist;
+            } else {
+                if (index < 30) archetype = archetypes.partisan;
+                else if (index < 40) archetype = archetypes.ideological;
+                else if (index < 45) archetype = archetypes.moderate;
+                else archetype = archetypes.institutionalist;
+            }
+
+            const senator = {
+                party: party,
+                archetype: archetype,
+                stance: calculateInitialStance(party, archetype),
+                pressure: 0, // Accumulated pressure from lobbying
+                mediaInfluence: 0, // Media campaign effects
+                id: `${party}-${index}`
+            };
+
+            return senator;
+        }
+
+        function calculateInitialStance(party, archetype) {
+            const nominee = gameState.nominee;
+            const baseAlignment = nominee.partisanAlignment[party];
+            const qualificationBonus = (nominee.qualifications - 70) / 100; // Bonus for high qualifications
+            
+            // Calculate support probability
+            let supportProb = (baseAlignment * archetype.partyWeight) + 
+                             (qualificationBonus * archetype.qualificationWeight);
+            
+            // Add some randomness
+            supportProb += (Math.random() - 0.5) * 0.3;
+            
+            if (supportProb > 0.7) return 'support';
+            if (supportProb < 0.3) return 'oppose';
+            return 'undecided';
+        }
+
+        function updateNomineeDisplay() {
+            const nominee = gameState.nominee;
+            const nomineeInfo = document.getElementById('nominee-info');
+            if (nomineeInfo) {
+                nomineeInfo.innerHTML = `
+                    <h4>${nominee.name}</h4>
+                    <p><strong>Philosophy:</strong> ${nominee.philosophy}</p>
+                    <p><strong>Qualifications:</strong> ${nominee.qualifications}/100</p>
+                    <p>${nominee.description}</p>
+                `;
+            }
+        }
+
+        function updateVoteCounts() {
+            gameState.supportCount = gameState.senators.filter(s => s.stance === 'support').length;
+            gameState.undecidedCount = gameState.senators.filter(s => s.stance === 'undecided').length;
+            gameState.opposeCount = gameState.senators.filter(s => s.stance === 'oppose').length;
+            
+            document.getElementById('support-count').textContent = gameState.supportCount;
+            document.getElementById('undecided-count').textContent = gameState.undecidedCount;
+            document.getElementById('oppose-count').textContent = gameState.opposeCount;
+        }
+
+        function renderSenate() {
+            const grid = document.getElementById('senate-grid');
+            grid.innerHTML = '';
+            
+            gameState.senators.forEach((senator, index) => {
+                const senatorDiv = document.createElement('div');
+                senatorDiv.className = `senator ${senator.party} ${senator.stance}`;
+                
+                // Enhanced tooltip with senator characteristics
+                const party = senator.party.charAt(0).toUpperCase() + senator.party.slice(1);
+                const stance = senator.stance.charAt(0).toUpperCase() + senator.stance.slice(1);
+                const archetype = senator.archetype.name;
+                
+                senatorDiv.title = `${party} ${archetype} - ${stance}`;
+                
+                // Add visual indicators for special characteristics
+                if (senator.archetype.name === 'Moderate') {
+                    senatorDiv.style.border = '3px solid #ffd700';
+                } else if (senator.archetype.name === 'Institutionalist') {
+                    senatorDiv.style.border = '3px solid #9b59b6';
+                }
+                
+                grid.appendChild(senatorDiv);
+            });
+        }
+
+        function updateDisplay() {
+            document.getElementById('political-capital').textContent = gameState.politicalCapital;
+            document.getElementById('approval').textContent = gameState.approval + '%';
+            document.getElementById('media').textContent = gameState.media;
+            document.getElementById('current-turn').textContent = `${gameState.turn}/${gameState.maxTurns}`;
+            
+            // Update hearing button
+            const hearingBtn = document.getElementById('hearing-btn');
+            const hearingCost = document.getElementById('hearing-cost');
+            if (gameState.hearingsHeld >= gameState.maxHearings) {
+                hearingBtn.style.opacity = '0.5';
+                hearingBtn.style.cursor = 'not-allowed';
+                hearingCost.textContent = `Hearings Used: ${gameState.hearingsHeld}/${gameState.maxHearings}`;
+            } else {
+                hearingBtn.style.opacity = '1';
+                hearingBtn.style.cursor = 'pointer';
+                hearingCost.textContent = `Cost: 25 PC (${gameState.maxHearings - gameState.hearingsHeld} left)`;
+            }
+            
+            updateVoteCounts();
+            renderSenate();
+        }
+
+        function takeAction(actionType) {
+            if (gameState.gameOver) return;
+            
+            let cost = 0;
+            let message = '';
+            
+            switch (actionType) {
+                case 'lobby':
+                    cost = 20;
+                    if (gameState.politicalCapital >= cost) {
+                        message = 'Conducted intensive lobbying meetings with key senators.';
+                        lobbyingSenators();
+                    }
+                    break;
+                    
+                case 'media':
+                    cost = 15;
+                    if (gameState.politicalCapital >= cost) {
+                        message = 'Launched comprehensive media campaign highlighting nominee\'s qualifications.';
+                        mediaCampaign();
+                    }
+                    break;
+                    
+                case 'hearing':
+                    cost = 25;
+                    if (gameState.politicalCapital >= cost && gameState.hearingsHeld < gameState.maxHearings) {
+                        startHearing();
+                        return; // Don't deduct cost yet, will be deducted after hearing
+                    } else if (gameState.hearingsHeld >= gameState.maxHearings) {
+                        addNewsItem('Maximum number of hearings already conducted.');
+                        return;
+                    }
+                    break;
+                    
+                case 'concessions':
+                    cost = 25;
+                    if (gameState.politicalCapital >= cost) {
+                        message = 'Made strategic policy concessions to win over moderate opposition.';
+                        makeConcessions();
+                    }
+                    break;
+                    
+                case 'grassroots':
+                    cost = 10;
+                    if (gameState.politicalCapital >= cost) {
+                        message = 'Mobilized grassroots supporters to contact their senators.';
+                        grassrootsMobilization();
+                    }
+                    break;
+            }
+            
+            if (gameState.politicalCapital >= cost && actionType !== 'hearing') {
+                gameState.politicalCapital -= cost;
+                addNewsItem(message);
+                updateDisplay();
+            } else if (actionType !== 'hearing') {
+                addNewsItem('Insufficient political capital for this action.');
+            }
+        }
+
+        function startHearing() {
+            gameState.hearingActive = true;
+            const nominee = gameState.nominee;
+            
+            const hearingContainer = document.getElementById('hearing-container');
+            hearingContainer.innerHTML = `
+                <div class="hearing-panel">
+                    <h3>🏛️ Senate Judiciary Committee Hearing</h3>
+                    <p>Choose your questioning strategy for ${nominee.name}. Different approaches will elicit different responses and affect senators differently.</p>
+                    
+                    <div class="questioning-options">
+                        <div class="question-card" onclick="conductQuestioning('supportive')">
+                            <h4>Supportive Questioning</h4>
+                            <p>Focus on nominee's qualifications and positive record. Low risk, appeals to institutionalists.</p>
+                        </div>
+                        <div class="question-card" onclick="conductQuestioning('probing')">
+                            <h4>Probing Questions</h4>
+                            <p>Ask detailed questions about judicial philosophy. Medium risk, reveals nominee's positions.</p>
+                        </div>
+                        <div class="question-card" onclick="conductQuestioning('hostile')">
+                            <h4>Hostile Questioning</h4>
+                            <p>Aggressive questioning to expose weaknesses. High risk, may backfire but can damage opponent.</p>
+                        </div>
+                        <div class="question-card" onclick="conductQuestioning('strategic')">
+                            <h4>Strategic Deflection</h4>
+                            <p>Coach nominee to avoid controversial topics. Safe approach, maintains status quo.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function conductQuestioning(approach) {
+            const nominee = gameState.nominee;
+            let response = generateNomineeResponse(approach, nominee);
+            let impact = processHearingImpact(approach, response, nominee);
+            
+            gameState.politicalCapital -= 25;
+            gameState.hearingsHeld++;
+            gameState.hearingActive = false;
+            
+            displayHearingResults(approach, response, impact);
+            updateDisplay();
+            
+            addNewsItem(`Judiciary Committee hearing reveals ${nominee.name}'s positions on key issues.`);
+        }
+
+        function generateNomineeResponse(approach, nominee) {
+            const responses = {
+                conservative: {
+                    supportive: {
+                        text: "Judge Mitchell eloquently describes her commitment to constitutional originalism and judicial restraint, emphasizing her extensive experience and legal scholarship.",
+                        effectiveness: 0.8,
+                        controversy: 0.2
+                    },
+                    probing: {
+                        text: "When pressed on specific issues, Judge Mitchell explains her originalist approach, stating that judges should interpret law as written, not make policy from the bench.",
+                        effectiveness: 0.6,
+                        controversy: 0.6
+                    },
+                    hostile: {
+                        text: "Under aggressive questioning, Judge Mitchell becomes defensive about past rulings, with some answers appearing evasive on civil rights issues.",
+                        effectiveness: 0.3,
+                        controversy: 0.8
+                    },
+                    strategic: {
+                        text: "Judge Mitchell carefully avoids taking positions on controversial issues, repeatedly citing judicial ethics and the need to keep an open mind.",
+                        effectiveness: 0.5,
+                        controversy: 0.3
+                    }
+                },
+                moderate: {
+                    supportive: {
+                        text: "Judge Chen discusses his pragmatic approach to law, emphasizing careful consideration of precedent and the real-world impact of judicial decisions.",
+                        effectiveness: 0.9,
+                        controversy: 0.1
+                    },
+                    probing: {
+                        text: "Judge Chen thoughtfully explains his case-by-case approach, showing deep knowledge of law while demonstrating judicial temperament.",
+                        effectiveness: 0.8,
+                        controversy: 0.3
+                    },
+                    hostile: {
+                        text: "Despite aggressive questioning, Judge Chen remains calm and measured, turning potential attacks into opportunities to show judicial temperament.",
+                        effectiveness: 0.7,
+                        controversy: 0.4
+                    },
+                    strategic: {
+                        text: "Judge Chen strikes a balance between transparency and appropriate judicial reserve, satisfying most committee members.",
+                        effectiveness: 0.7,
+                        controversy: 0.2
+                    }
+                },
+                liberal: {
+                    supportive: {
+                        text: "Judge Rodriguez passionately discusses her commitment to equal justice and constitutional rights, drawing on her extensive civil rights background.",
+                        effectiveness: 0.7,
+                        controversy: 0.4
+                    },
+                    probing: {
+                        text: "Judge Rodriguez articulates her living constitution approach, explaining how law must adapt to modern circumstances while respecting precedent.",
+                        effectiveness: 0.6,
+                        controversy: 0.7
+                    },
+                    hostile: {
+                        text: "Under hostile questioning, Judge Rodriguez's responses about activist judging create soundbites that energize both supporters and opponents.",
+                        effectiveness: 0.4,
+                        controversy: 0.9
+                    },
+                    strategic: {
+                        text: "Judge Rodriguez carefully moderates her language while still conveying her judicial philosophy, attempting to broaden her appeal.",
+                        effectiveness: 0.6,
+                        controversy: 0.4
+                    }
+                }
+            };
+            
+            const nomineeType = Object.keys(nomineeProfiles).find(key => 
+                nomineeProfiles[key].name === nominee.name
+            );
+            
+            return responses[nomineeType][approach];
+        }
+
+        function processHearingImpact(approach, response, nominee) {
+            let impact = {
+                partisans: { change: 0, description: 'No change' },
+                moderates: { change: 0, description: 'No change' },
+                institutionalists: { change: 0, description: 'No change' },
+                ideologicals: { change: 0, description: 'No change' },
+                approval: 0,
+                media: 'No change'
+            };
+            
+            // Base effectiveness and controversy determine impact
+            const effectiveness = response.effectiveness;
+            const controversy = response.controversy;
+            
+            // Institutionalists care about qualifications and judicial temperament
+            if (approach === 'supportive' && nominee.qualifications > 85) {
+                impact.institutionalists = { change: 2, description: 'Impressed by qualifications' };
+            } else if (approach === 'hostile' && effectiveness < 0.5) {
+                impact.institutionalists = { change: -1, description: 'Concerned by poor performance' };
+            }
+            
+            // Moderates are swayed by balanced, thoughtful responses
+            if (effectiveness > 0.7 && controversy < 0.4) {
+                impact.moderates = { change: 2, description: 'Appreciates balanced approach' };
+            } else if (controversy > 0.7) {
+                impact.moderates = { change: -1, description: 'Troubled by controversial positions' };
+            }
+            
+            // Partisans respond to ideology alignment
+            const alignment = nominee.partisanAlignment;
+            if (approach === 'probing' || approach === 'hostile') {
+                // Republican partisans
+                if (alignment.republican > 0.6 && controversy > 0.5) {
+                    impact.partisans = { change: 1, description: 'Republicans rally around nominee' };
+                } else if (alignment.republican < 0.4) {
+                    impact.partisans = { change: -1, description: 'Republicans concerned by liberal positions' };
+                }
+            }
+            
+            // Ideologicals care about judicial philosophy clarity
+            if (approach === 'probing' && effectiveness > 0.6) {
+                impact.ideologicals = { change: 1, description: 'Philosophy clearly articulated' };
+            } else if (approach === 'strategic' && controversy < 0.3) {
+                impact.ideologicals = { change: -1, description: 'Frustrated by evasive answers' };
+            }
+            
+            // Public approval impact
+            impact.approval = Math.floor((effectiveness - controversy) * 10);
+            
+            // Media impact
+            if (controversy > 0.7) {
+                impact.media = 'Negative - Controversial statements dominate coverage';
+            } else if (effectiveness > 0.7) {
+                impact.media = 'Positive - Strong performance praised';
+            } else {
+                impact.media = 'Mixed - Competent but unremarkable performance';
+            }
+            
+            return impact;
+        }
+
+        function displayHearingResults(approach, response, impact) {
+            const hearingContainer = document.getElementById('hearing-container');
+            hearingContainer.innerHTML = `
+                <div class="hearing-panel">
+                    <h3>📺 Hearing Results: ${approach.charAt(0).toUpperCase() + approach.slice(1)} Questioning</h3>
+                    
+                    <div class="nominee-response">
+                        <h4>Nominee Response:</h4>
+                        <p>${response.text}</p>
+                        <div style="margin-top: 10px;">
+                            <small>Effectiveness: ${Math.round(response.effectiveness * 100)}% | Controversy Level: ${Math.round(response.controversy * 100)}%</small>
+                        </div>
+                    </div>
+                    
+                    <div class="response-impact">
+                        <div class="impact-card ${impact.institutionalists.change > 0 ? 'impact-positive' : impact.institutionalists.change < 0 ? 'impact-negative' : 'impact-neutral'}">
+                            <strong>Institutionalists</strong><br>
+                            ${impact.institutionalists.description}
+                        </div>
+                        <div class="impact-card ${impact.moderates.change > 0 ? 'impact-positive' : impact.moderates.change < 0 ? 'impact-negative' : 'impact-neutral'}">
+                            <strong>Moderates</strong><br>
+                            ${impact.moderates.description}
+                        </div>
+                        <div class="impact-card ${impact.partisans.change > 0 ? 'impact-positive' : impact.partisans.change < 0 ? 'impact-negative' : 'impact-neutral'}">
+                            <strong>Partisans</strong><br>
+                            ${impact.partisans.description}
+                        </div>
+                        <div class="impact-card ${impact.ideologicals.change > 0 ? 'impact-positive' : impact.ideologicals.change < 0 ? 'impact-negative' : 'impact-neutral'}">
+                            <strong>Ideologicals</strong><br>
+                            ${impact.ideologicals.description}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px; text-align: center;">
+                        <p><strong>Media Coverage:</strong> ${impact.media}</p>
+                        <p><strong>Public Approval Change:</strong> ${impact.approval > 0 ? '+' : ''}${impact.approval}%</p>
+                    </div>
+                    
+                    <button onclick="clearHearing()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 20px; margin-top: 15px; cursor: pointer;">Continue</button>
+                </div>
+            `;
+            
+            // Apply the impact to senators
+            applyHearingImpact(impact);
+        }
+
+        function applyHearingImpact(impact) {
+            gameState.senators.forEach(senator => {
+                let change = 0;
+                
+                switch (senator.archetype.name) {
+                    case 'Partisan':
+                        change = impact.partisans.change;
+                        break;
+                    case 'Moderate':
+                        change = impact.moderates.change;
+                        break;
+                    case 'Institutionalist':
+                        change = impact.institutionalists.change;
+                        break;
+                    case 'Ideological':
+                        change = impact.ideologicals.change;
+                        break;
+                }
+                
+                // Apply changes based on current stance and change value
+                if (change > 0) {
+                    if (senator.stance === 'oppose' && Math.random() < change * 0.3) {
+                        senator.stance = 'undecided';
+                    } else if (senator.stance === 'undecided' && Math.random() < change * 0.4) {
+                        senator.stance = 'support';
+                    }
+                } else if (change < 0) {
+                    if (senator.stance === 'support' && Math.random() < Math.abs(change) * 0.3) {
+                        senator.stance = 'undecided';
+                    } else if (senator.stance === 'undecided' && Math.random() < Math.abs(change) * 0.4) {
+                        senator.stance = 'oppose';
+                    }
+                }
+            });
+            
+            // Apply approval change
+            gameState.approval += impact.approval;
+            gameState.approval = Math.max(25, Math.min(95, gameState.approval));
+            
+            // Update media sentiment
+            if (impact.media.includes('Negative')) {
+                gameState.media = 'Negative';
+            } else if (impact.media.includes('Positive')) {
+                gameState.media = 'Positive';
+            }
+        }
+
+        function clearHearing() {
+            document.getElementById('hearing-container').innerHTML = '';
+            updateDisplay();
+        }
+
+        function lobbyingSenators() {
+            // Direct lobbying is most effective on moderates and institutionalists
+            gameState.senators.forEach(senator => {
+                if (senator.stance === 'undecided') {
+                    senator.pressure += 20;
+                    
+                    // Higher success rate for moderates and institutionalists
+                    let flipChance = 0.3;
+                    if (senator.archetype.name === 'Moderate') flipChance = 0.5;
+                    if (senator.archetype.name === 'Institutionalist') flipChance = 0.4;
+                    
+                    if (Math.random() < flipChance) {
+                        senator.stance = 'support';
+                        addNewsItem(`Secured support from ${senator.party} ${senator.archetype.name}.`);
+                    }
+                }
+                
+                // Even opposing senators might be swayed by intensive lobbying
+                if (senator.stance === 'oppose' && senator.archetype.name === 'Moderate') {
+                    senator.pressure += 15;
+                    if (Math.random() < 0.15) {
+                        senator.stance = 'undecided';
+                        addNewsItem(`${senator.party} moderate reconsidering position after lobbying.`);
+                    }
+                }
+            });
+        }
+
+        function mediaCampaign() {
+            gameState.approval += Math.floor(Math.random() * 8) + 3;
+            gameState.media = gameState.approval > 70 ? 'Positive' : gameState.approval < 50 ? 'Negative' : 'Neutral';
+            
+            // Media campaigns affect senators differently based on their archetype
+            gameState.senators.forEach(senator => {
+                senator.mediaInfluence += 10;
+                
+                if (senator.stance === 'undecided') {
+                    let flipChance = 0.2;
+                    
+                    // Partisans are less affected by media
+                    if (senator.archetype.name === 'Partisan') flipChance = 0.1;
+                    // Moderates are more affected
+                    if (senator.archetype.name === 'Moderate') flipChance = 0.35;
+                    
+                    if (Math.random() < flipChance) {
+                        senator.stance = 'support';
+                        addNewsItem(`Media pressure influences ${senator.party} ${senator.archetype.name}.`);
+                    }
+                }
+            });
+        }
+
+        function makeConcessions() {
+            // Concessions particularly appeal to moderates and institutionalists
+            let concessionsMade = false;
+            
+            gameState.senators.forEach(senator => {
+                if (senator.archetype.name === 'Moderate' || senator.archetype.name === 'Institutionalist') {
+                    if (senator.stance === 'oppose' && Math.random() < 0.4) {
+                        senator.stance = 'undecided';
+                        addNewsItem(`Policy concessions move ${senator.party} ${senator.archetype.name} to reconsider.`);
+                        concessionsMade = true;
+                    } else if (senator.stance === 'undecided' && Math.random() < 0.6) {
+                        senator.stance = 'support';
+                        addNewsItem(`Concessions secure support from ${senator.party} ${senator.archetype.name}.`);
+                        concessionsMade = true;
+                    }
+                }
+            });
+            
+            if (concessionsMade) {
+                gameState.approval -= 3; // Base might not like concessions
+            }
+        }
+
+        function grassrootsMobilization() {
+            // Grassroots pressure affects senators based on their state dynamics
+            gameState.senators.forEach(senator => {
+                if (senator.stance === 'undecided') {
+                    let flipChance = 0.15;
+                    
+                    // Partisans in safe seats are less affected
+                    if (senator.archetype.name === 'Partisan') flipChance = 0.05;
+                    // Moderates in competitive states are more affected
+                    if (senator.archetype.name === 'Moderate') flipChance = 0.25;
+                    
+                    if (Math.random() < flipChance) {
+                        senator.stance = 'support';
+                        addNewsItem(`Grassroots pressure from constituents sways ${senator.party} senator.`);
+                    }
+                }
+            });
+        }
+
+        function convertSenators(fromStance, toStance, count) {
+            const candidates = gameState.senators.filter(s => s.stance === fromStance);
+            const toConvert = Math.min(count, candidates.length);
+            
+            for (let i = 0; i < toConvert; i++) {
+                const randomIndex = Math.floor(Math.random() * candidates.length);
+                const senator = candidates.splice(randomIndex, 1)[0];
+                senator.stance = toStance;
+            }
+        }
+
+        function generateCrisis() {
+            if (gameState.crisisActive || Math.random() < 0.6) return;
+            
+            const nominee = gameState.nominee;
+            const crises = [
+                {
+                    title: 'Past Rulings Scrutinized',
+                    description: `Critics highlight controversial aspects of ${nominee.name}'s judicial record on civil liberties.`,
+                    effect: () => {
+                        // Affects senators based on their priorities
+                        gameState.senators.forEach(senator => {
+                            if (senator.archetype.name === 'Institutionalist' && Math.random() < 0.3) {
+                                if (senator.stance === 'support') senator.stance = 'undecided';
+                                else if (senator.stance === 'undecided') senator.stance = 'oppose';
+                            }
+                        });
+                        gameState.approval -= 8;
+                    }
+                },
+                {
+                    title: 'Bar Association Review',
+                    description: `The American Bar Association issues mixed ratings on ${nominee.name}'s qualifications.`,
+                    effect: () => {
+                        // Particularly affects institutionalists who care about qualifications
+                        gameState.senators.forEach(senator => {
+                            if (senator.archetype.name === 'Institutionalist') {
+                                if (nominee.qualifications < 80 && Math.random() < 0.4) {
+                                    if (senator.stance === 'support') senator.stance = 'undecided';
+                                }
+                            }
+                        });
+                    }
+                },
+                {
+                    title: 'Cross-Party Support Emerges',
+                    description: `Respected legal scholars from both parties endorse ${nominee.name}'s qualifications.`,
+                    effect: () => {
+                        // Benefits nominees with high qualifications
+                        if (nominee.qualifications > 85) {
+                            gameState.senators.forEach(senator => {
+                                if ((senator.archetype.name === 'Moderate' || senator.archetype.name === 'Institutionalist') 
+                                    && senator.stance === 'undecided' && Math.random() < 0.4) {
+                                    senator.stance = 'support';
+                                }
+                            });
+                            gameState.approval += 6;
+                        }
+                    }
+                },
+                {
+                    title: 'Ideological Opposition Mobilizes',
+                    description: `Interest groups launch campaigns based on ${nominee.name}'s judicial philosophy.`,
+                    effect: () => {
+                        // Affects senators based on nominee's partisan alignment
+                        gameState.senators.forEach(senator => {
+                            const alignment = nominee.partisanAlignment[senator.party];
+                            if (alignment < 0.3 && senator.archetype.name === 'Ideological' && Math.random() < 0.5) {
+                                if (senator.stance === 'undecided') senator.stance = 'oppose';
+                            }
+                        });
+                    }
+                },
+                {
+                    title: 'Bipartisan Judicial Precedent',
+                    description: `Legal experts emphasize the importance of qualified nominees regardless of philosophy.`,
+                    effect: () => {
+                        // Helps highly qualified nominees with institutionalists
+                        if (nominee.qualifications > 90) {
+                            gameState.senators.forEach(senator => {
+                                if (senator.archetype.name === 'Institutionalist' && Math.random() < 0.3) {
+                                    if (senator.stance === 'oppose') senator.stance = 'undecided';
+                                    else if (senator.stance === 'undecided') senator.stance = 'support';
+                                }
+                            });
+                        }
+                    }
+                }
+            ];
+            
+            const crisis = crises[Math.floor(Math.random() * crises.length)];
+            showCrisis(crisis);
+        }
+
+        function showCrisis(crisis) {
+            gameState.crisisActive = true;
+            const container = document.getElementById('crisis-container');
+            container.innerHTML = `
+                <div class="crisis-panel">
+                    <h3>🚨 Crisis: ${crisis.title}</h3>
+                    <p>${crisis.description}</p>
+                    <button onclick="resolveCrisis()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 20px; margin-top: 15px; cursor: pointer;">Address Crisis</button>
+                </div>
+            `;
+            
+            // Store crisis effect for resolution
+            window.currentCrisisEffect = crisis.effect;
+        }
+
+        function resolveCrisis() {
+            if (window.currentCrisisEffect) {
+                window.currentCrisisEffect();
+            }
+            document.getElementById('crisis-container').innerHTML = '';
+            gameState.crisisActive = false;
+            updateDisplay();
+            addNewsItem('Crisis addressed through strategic response.');
+        }
+
+        function nextTurn() {
+            if (gameState.gameOver) return;
+            
+            gameState.turn++;
+            
+            // Realistic senator behavior changes over time
+            gameState.senators.forEach(senator => {
+                // Senators may harden positions over time
+                if (senator.stance === 'undecided' && Math.random() < 0.15) {
+                    // Decision influenced by party alignment and qualifications
+                    const nominee = gameState.nominee;
+                    const partyAlignment = nominee.partisanAlignment[senator.party];
+                    const qualBonus = (nominee.qualifications - 70) / 100;
+                    
+                    let supportProb = (partyAlignment * senator.archetype.partyWeight) + 
+                                     (qualBonus * senator.archetype.qualificationWeight);
+                    
+                    // Add pressure and media influence
+                    supportProb += (senator.pressure / 100) + (senator.mediaInfluence / 200);
+                    
+                    senator.stance = supportProb > 0.5 ? 'support' : 'oppose';
+                    
+                    const decision = supportProb > 0.5 ? 'announces support' : 'announces opposition';
+                    addNewsItem(`${senator.party} ${senator.archetype.name} ${decision} for nominee.`);
+                }
+                
+                // Decay pressure and media influence over time
+                senator.pressure *= 0.8;
+                senator.mediaInfluence *= 0.9;
+            });
+            
+            // Political capital regeneration
+            gameState.politicalCapital += 15;
+            gameState.politicalCapital = Math.min(gameState.politicalCapital, 120);
+            
+            // Approval rating drift based on nominee characteristics
+            const nominee = gameState.nominee;
+            let approvalChange = Math.floor((Math.random() - 0.5) * 8);
+            
+            // High qualification nominees maintain approval better
+            if (nominee.qualifications > 85) approvalChange += 2;
+            if (nominee.qualifications < 75) approvalChange -= 2;
+            
+            gameState.approval += approvalChange;
+            gameState.approval = Math.max(30, Math.min(90, gameState.approval));
+            
+            generateCrisis();
+            updateStrategyTip();
+            
+            if (gameState.turn > gameState.maxTurns || gameState.supportCount >= 50) {
+                endGame();
+            } else {
+                updateDisplay();
+                addNewsItem(`Week ${gameState.turn}: Senate continues deliberations on ${nominee.name}.`);
+            }
+        }
+
+        function updateStrategyTip() {
+            const nominee = gameState.nominee;
+            const tips = [
+                `With ${nominee.name}'s ${nominee.qualifications}/100 qualifications, institutionalists are key targets for lobbying.`,
+                "Moderate senators (gold border) are most likely to cross party lines based on qualifications and pressure.",
+                `This ${nominee.philosophy} nominee will face ${nominee.partisanAlignment.republican > 0.6 ? 'strong Republican support' : 'Republican skepticism'}.`,
+                "Institutionalists (purple border) prioritize qualifications over partisan considerations.",
+                "Senate hearings can dramatically shift momentum - choose your questioning strategy carefully.",
+                "Supportive questioning is safe but may not change minds; hostile questioning is risky but can expose weaknesses.",
+                "Highly qualified nominees perform better under aggressive questioning than controversial ones.",
+                "Hearing responses affect different senator types differently - plan your approach accordingly.",
+                "Media campaigns are most effective on moderates who face electoral pressure.",
+                "Concessions work best with moderates and institutionalists who value compromise.",
+                "Partisan senators require intensive pressure and exceptional circumstances to flip.",
+                `Grassroots mobilization is ${gameState.approval > 65 ? 'more effective' : 'less effective'} with current approval ratings.`,
+                "Watch for cross-party defections - they signal broader momentum shifts.",
+                "Crisis events affect different senator types differently based on their priorities.",
+                `You have ${gameState.maxHearings - gameState.hearingsHeld} hearings remaining - use them strategically.`
+            ];
+            
+            const tip = tips[Math.floor(Math.random() * tips.length)];
+            document.getElementById('strategy-tip').textContent = tip;
+        }
+
+        function addNewsItem(text) {
+            const container = document.getElementById('news-container');
+            const newsItem = document.createElement('div');
+            newsItem.className = 'news-item';
+            newsItem.textContent = `Week ${gameState.turn}: ${text}`;
+            container.insertBefore(newsItem, container.firstChild);
+            
+            // Keep only last 5 items
+            while (container.children.length > 5) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function endGame() {
+            gameState.gameOver = true;
+            const won = gameState.supportCount >= 50;
+            const nominee = gameState.nominee;
+            
+            // Analyze the outcome based on nominee characteristics and strategy
+            let outcomeAnalysis = '';
+            if (won) {
+                if (nominee.qualifications > 90) {
+                    outcomeAnalysis = "High qualifications helped secure cross-party support from institutionalists.";
+                } else if (nominee.partisanAlignment.republican > 0.7 || nominee.partisanAlignment.democrat > 0.7) {
+                    outcomeAnalysis = "Strong partisan alignment ensured party loyalty despite opposition.";
+                } else {
+                    outcomeAnalysis = "Effective political strategy overcame nominee's moderate appeal challenges.";
+                }
+            } else {
+                if (nominee.qualifications < 80) {
+                    outcomeAnalysis = "Qualification concerns swayed key institutionalist votes.";
+                } else if (Math.abs(nominee.partisanAlignment.republican - nominee.partisanAlignment.democrat) > 0.6) {
+                    outcomeAnalysis = "Strong partisan opposition overcame strategic efforts.";
+                } else {
+                    outcomeAnalysis = "Insufficient political capital allocation led to strategic failures.";
+                }
+            }
+            
+            // Count cross-party defections
+            let republicanDefectors = 0;
+            let democratDefectors = 0;
+            
+            gameState.senators.forEach(senator => {
+                if (senator.party === 'republican') {
+                    if ((nominee.partisanAlignment.republican > 0.6 && senator.stance === 'oppose') ||
+                        (nominee.partisanAlignment.republican < 0.4 && senator.stance === 'support')) {
+                        republicanDefectors++;
+                    }
+                } else {
+                    if ((nominee.partisanAlignment.democrat > 0.6 && senator.stance === 'oppose') ||
+                        (nominee.partisanAlignment.democrat < 0.4 && senator.stance === 'support')) {
+                        democratDefectors++;
+                    }
+                }
+            });
+            
+            const gameOverDiv = document.createElement('div');
+            gameOverDiv.className = 'game-over';
+            gameOverDiv.innerHTML = `
+                <div class="game-over-content">
+                    <h2>${won ? '🎉 Confirmation Successful!' : '❌ Nomination Failed'}</h2>
+                    <p><strong>Final Vote Count: ${gameState.supportCount} - ${gameState.opposeCount}</strong></p>
+                    <p><strong>Nominee:</strong> ${nominee.name} (${nominee.philosophy})</p>
+                    <p><strong>Qualifications:</strong> ${nominee.qualifications}/100</p>
+                    <p>Turns Used: ${gameState.turn}/${gameState.maxTurns}</p>
+                    <p>Final Approval: ${gameState.approval}%</p>
+                    <p>Cross-party defections: ${republicanDefectors + democratDefectors}</p>
+                    
+                    <div class="theory-explanation" style="text-align: left; margin: 20px 0;">
+                        <h4>Political Science Analysis:</h4>
+                        <p><strong>Outcome:</strong> ${outcomeAnalysis}</p>
+                        
+                        <p><strong>Partisan Polarization:</strong> ${republicanDefectors + democratDefectors > 8 ? 
+                            'Significant cross-party voting shows qualifications can overcome partisan divisions.' : 
+                            'Limited cross-party support demonstrates strong partisan polarization effects.'}</p>
+                        
+                        <p><strong>Institutional Behavior:</strong> ${nominee.qualifications > 85 ? 
+                            'High qualifications influenced institutionalist senators who prioritize credentials.' : 
+                            'Lower qualifications allowed partisan considerations to dominate institutional norms.'}</p>
+                        
+                        <p><strong>Strategic Politics:</strong> ${won ? 
+                            'Effective resource allocation and timing secured victory despite challenges.' : 
+                            'Strategic limitations or poor timing contributed to the nomination\'s failure.'}</p>
+                        
+                        <p><strong>Media & Public Opinion:</strong> ${gameState.approval > 65 ? 
+                            'Strong public approval provided leverage for senator persuasion.' : 
+                            'Low approval ratings limited effectiveness of grassroots and media strategies.'}</p>
+                    </div>
+                    
+                    <button onclick="location.reload()" style="background: #3742fa; color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 1.1em; cursor: pointer; margin-top: 20px;">Play Again</button>
+                </div>
+            `;
+            
+            document.body.appendChild(gameOverDiv);
+        }
+
+        // Initialize game
+        initializeSenators();
+        updateDisplay();
+        updateStrategyTip();
+        addNewsItem('Supreme Court nomination battle begins.');
+    </script>
+</body>
+</html>
